@@ -6,6 +6,7 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using UnityEditor.Toolbars;
 using UnityEngine;
 
 public class ResoniteLinker : MonoBehaviour
@@ -31,23 +32,28 @@ public class ResoniteLinker : MonoBehaviour
         {
             try
             {
+                // attempt setup socket to client
                 socket = new ClientWebSocket();
                 Debug.Log($"Attempting connection to ws://localhost:{port}");
                 await socket.ConnectAsync(new Uri($"ws://localhost:{port}"), cts.Token);
                 Debug.Log("Connected to CalibrationEnv");
 
+                // start receiving on this client
                 await ReceiveLoop();
             }
             catch (Exception ex)
             {
+                // throw error, wait before retrying connection
                 Debug.LogError("WebSocket connection error: " + ex.Message);
-                await Task.Delay(1000); // wait before retrying connections
+                await Task.Delay(1000); 
             }
         }
     }
 
     private async Task ReceiveLoop()
     {
+        // TODO: consider buffer size, 
+        // but works for now, ey.
         var buffer = new byte[8192];
 
         try
@@ -57,6 +63,7 @@ public class ResoniteLinker : MonoBehaviour
                 using var ms = new System.IO.MemoryStream();
                 WebSocketReceiveResult result;
 
+                // keep receiving until end of msg
                 do
                 {
                     result = await socket.ReceiveAsync(new ArraySegment<byte>(buffer), cts.Token);
@@ -71,9 +78,9 @@ public class ResoniteLinker : MonoBehaviour
                     ms.Write(buffer, 0, result.Count);
                 } while (!result.EndOfMessage);
 
+                // get and parse msg
                 string msg = Encoding.UTF8.GetString(ms.ToArray());
                 Debug.Log("Received message:\n" + msg);
-
                 ParseJSON(msg);
             }
         }
@@ -97,7 +104,7 @@ public class ResoniteLinker : MonoBehaviour
             // Recursive parse van de root slot
             ParseSlot(dataNode);
         }
-        catch (System.Exception ex)
+        catch (Exception ex)
         {
             Debug.LogError("Failed to parse JSON: " + ex);
         }
@@ -107,17 +114,50 @@ public class ResoniteLinker : MonoBehaviour
     {
         if (slotNode == null) return;
 
-        // Pak id en position
+        // define vars 
+        Vector3 position = Vector3.zero;
+        Vector3 scale = Vector3.one;
+        Quaternion rotation = Quaternion.identity;
+
+        // grab data from slot 
         var id = slotNode["id"]?.Value<string>();
+        var nameToken = slotNode["name"]?["value"];
+        var tagToken = slotNode["tag"]?["value"];
         var posToken = slotNode["position"]?["value"];
-        if (id == null || posToken == null) return;
+        var rotToken = slotNode["rotation"]?["value"];
+        var scaleToken = slotNode["scale"]?["value"];
 
-        float x = posToken["x"]?.Value<float>() ?? 0f;
-        float y = posToken["y"]?.Value<float>() ?? 0f;
-        float z = posToken["z"]?.Value<float>() ?? 0f;
-        Vector3 position = new Vector3(x, y, z);
+        // skip if no id and/or tag
+        // TODO: non tagged shouldn't be send from CalibrationEnv
+        if (id == null /*|| tagToken == null*/) return; 
 
-        // Setup of reuse GO
+        // process data
+        if (posToken != null)
+        {
+            float x = posToken["x"]?.Value<float>() ?? 0f;
+            float y = posToken["y"]?.Value<float>() ?? 0f;
+            float z = posToken["z"]?.Value<float>() ?? 0f;
+            position = new Vector3(x, y, z);
+        }
+
+        if (rotToken != null)
+        {
+            float x = rotToken["x"]?.Value<float>() ?? 0f;
+            float y = rotToken["y"]?.Value<float>() ?? 0f;
+            float z = rotToken["z"]?.Value<float>() ?? 0f;
+            float w = rotToken["w"]?.Value<float>() ?? 1f;
+            rotation = new Quaternion(x, y, z, w);
+        }
+
+        if (scaleToken != null)
+        {
+            float x = scaleToken["x"]?.Value<float>() ?? 1f;
+            float y = scaleToken["y"]?.Value<float>() ?? 1f;
+            float z = scaleToken["z"]?.Value<float>() ?? 1f;
+            scale = new Vector3(x, y, z);
+        }
+
+        // setup or reuse GO based on id
         GameObject obj;
         if (!slotObjects.TryGetValue(id, out obj))
         {
@@ -126,11 +166,21 @@ public class ResoniteLinker : MonoBehaviour
             slotObjects[id] = obj;
         }
 
-        // Update parent en position
+        // update parent and transform
+        obj.name = nameToken != null ? nameToken.Value<string>() : "no_name";
+
+        var tagValue = tagToken != null ? tagToken.Value<string>() : "Untagged";
+        obj.tag = !string.IsNullOrEmpty(tagValue) ? tagValue : "Untagged";
+        
         obj.transform.position = position;
+        obj.transform.rotation = rotation;
+        obj.transform.localScale = scale;
+        
         if (parent != null) obj.transform.parent = parent;
 
-        // Recurse children
+        Debug.Log($"Parsed {obj.name}");
+
+        // recursive call for children
         var children = slotNode["children"];
         if (children != null)
         {
