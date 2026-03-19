@@ -12,7 +12,19 @@ using UnityEngine;
 public class ResoniteLinker : MonoBehaviour
 {
     [SerializeField] private uint port = 0;
-    
+
+    [SerializeField] private GameObject rootPrefab;
+    [SerializeField] private GameObject lampPrefab;
+    [SerializeField] private GameObject audioPrefab;
+    [SerializeField] private List<CustomTagObjects> customTagObjects;
+
+    [Serializable]
+    public struct CustomTagObjects
+    {
+        [SerializeField] public string tag;
+        [SerializeField] public GameObject prefab;
+    }
+
     private ClientWebSocket socket = new ClientWebSocket();
     private CancellationTokenSource cts = new CancellationTokenSource();
 
@@ -129,7 +141,9 @@ public class ResoniteLinker : MonoBehaviour
 
         // skip if no id and/or tag
         // TODO: non tagged shouldn't be send from CalibrationEnv
-        if (id == null /*|| tagToken == null*/) return; 
+        // NOTE: this makes an exception for the root!! 
+        var tagValue = tagToken != null ? tagToken.Value<string>() : "Untagged";
+        if (id != "Root" && (id == null || string.IsNullOrEmpty(tagValue))) return; 
 
         // process data
         if (posToken != null)
@@ -161,24 +175,53 @@ public class ResoniteLinker : MonoBehaviour
         GameObject obj;
         if (!slotObjects.TryGetValue(id, out obj))
         {
-            obj = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            // setup object based on tag,
+            // but make exception for root
+            if (id == "Root")
+            {
+                obj = Instantiate(rootPrefab);
+            }
+            else
+            {
+                switch (tagValue)
+                {
+                    case "Camera":
+                        obj = Camera.main.gameObject;
+                        break;
+
+                    case "Lamp":
+                        obj = Instantiate(lampPrefab);
+                        break;
+
+                    case "Audio":
+                        obj = Instantiate(audioPrefab);
+                        break;
+
+                    case "Mesh":
+                        obj = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                        break;
+
+                    default:
+                        obj = Instantiate(customTagObjects.Find(o => o.tag == tagValue).prefab);
+                        break;
+                }
+            }
+
             obj.name = id;
             slotObjects[id] = obj;
         }
 
         // update parent and transform
         obj.name = nameToken != null ? nameToken.Value<string>() : "no_name";
-
-        var tagValue = tagToken != null ? tagToken.Value<string>() : "Untagged";
         obj.tag = !string.IsNullOrEmpty(tagValue) ? tagValue : "Untagged";
-        
         obj.transform.position = position;
         obj.transform.rotation = rotation;
         obj.transform.localScale = scale;
         
+        // set parent if passed 
+        // NOTE: rn only the root can be a parent
+        // since we only call to depth = 0
         if (parent != null) obj.transform.parent = parent;
-
-        Debug.Log($"Parsed {obj.name}");
 
         // recursive call for children
         var children = slotNode["children"];

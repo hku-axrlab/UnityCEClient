@@ -477,6 +477,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ResoniteLinker
   port: 4196
+  rootPrefab: {fileID: 2929397269302186400, guid: 2013d7594af90c44ab4878db97e649f0, type: 3}
+  lampPrefab: {fileID: 9131692198421290309, guid: 3a97b66ad7486654283cbb4fb81b777d, type: 3}
+  audioPrefab: {fileID: 7786720881236730640, guid: 981a24ce2e69e6e4cb946cb5546460ea, type: 3}
+  customTagObjects:
+  - tag: TinyCapsule
+    prefab: {fileID: 3266680028982745990, guid: ac75b4564942ed749a391918050a25f6, type: 3}
+  - tag: Cone
+    prefab: {fileID: 3386438831562629761, guid: ac0a1f3fe82d95b4e9c37e3a36f9b9fe, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
