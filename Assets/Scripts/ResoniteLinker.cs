@@ -110,11 +110,20 @@ public class ResoniteLinker : MonoBehaviour
         try
         {
             var root = JObject.Parse(msg);
-            var dataNode = root["data"];
-            if (dataNode == null) return;
+            var responsesNode = root["responses"];
 
-            // Recursive parse van de root slot
-            ParseSlot(dataNode);
+            foreach (var item in responsesNode)
+            {
+                var dataNode = item["data"];
+                if (dataNode == null)
+                {
+                    Debug.LogError($"dataNode was null, in {item}!");
+                    return;
+                }
+
+                // Recursive parse van de root slot
+                ParseSlot(dataNode);
+            }
         }
         catch (Exception ex)
         {
@@ -224,14 +233,16 @@ public class ResoniteLinker : MonoBehaviour
         if (parent != null) obj.transform.parent = parent;
 
         // recursive call for children
-        var children = slotNode["children"];
+        // TODO: don't know if this is still usefull
+        // used to do this when started at root 
+        /*var children = slotNode["children"];
         if (children != null)
         {
             foreach (var child in children)
             {
                 ParseSlot(child, obj.transform);
             }
-        }
+        }*/
     }
 
     private void OnDestroy()
