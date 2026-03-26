@@ -92,7 +92,7 @@ public class ResoniteLinker : MonoBehaviour
 
                 // get and parse msg
                 string msg = Encoding.UTF8.GetString(ms.ToArray());
-                Debug.Log("Received message:\n" + msg);
+                // Debug.Log("Received message:\n" + msg);
                 ParseJSON(msg);
             }
         }
