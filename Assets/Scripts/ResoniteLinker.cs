@@ -13,7 +13,10 @@ public class ResoniteLinker : MonoBehaviour
 {
     [SerializeField] private uint port = 0;
 
-    [SerializeField] private GameObject rootPrefab;
+	[SerializeField] private GameObject rootPrefab; // do we need one of these?
+	[SerializeField] private ResonitePrefabMap prefabMap;    
+    
+	/*
     [SerializeField] private GameObject lampPrefab;
     [SerializeField] private GameObject audioPrefab;
     [SerializeField] private List<CustomTagObjects> customTagObjects;
@@ -24,8 +27,9 @@ public class ResoniteLinker : MonoBehaviour
         [SerializeField] public string tag;
         [SerializeField] public GameObject prefab;
     }
+    */
 
-    private ClientWebSocket socket = new ClientWebSocket();
+	private ClientWebSocket socket = new ClientWebSocket();
     private CancellationTokenSource cts = new CancellationTokenSource();
 
     private Dictionary<string, GameObject> slotObjects = new Dictionary<string, GameObject>();
@@ -192,27 +196,16 @@ public class ResoniteLinker : MonoBehaviour
             }
             else
             {
-                switch (tagValue)
+                // All tag values should be in map
+                if (prefabMap.map.Contains(tagValue))
                 {
-                    case "Camera":
-                        obj = Camera.main.gameObject;
-                        break;
-
-                    case "Lamp":
-                        obj = Instantiate(lampPrefab);
-                        break;
-
-                    case "Audio":
-                        obj = Instantiate(audioPrefab);
-                        break;
-
-                    case "Mesh":
-                        obj = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                        break;
-
-                    default:
-                        obj = Instantiate(customTagObjects.Find(o => o.tag == tagValue).prefab);
-                        break;
+                    obj = Instantiate(prefabMap.map[tagValue]);
+                }
+                else
+                {
+                    // ignore or debug log missing tag
+                    // Debug.LogWarning($"Tag missing from prefabMap: {tagValue}");
+                    return;
                 }
             }
 
@@ -220,12 +213,20 @@ public class ResoniteLinker : MonoBehaviour
             slotObjects[id] = obj;
         }
 
-        // update parent and transform
+		// update parent and transform
+        // FIXME: this GetComponent feels slow here, maybe we can cache it for spawned objects?
+		BaseTemplate baseTemplate = obj.GetComponent<BaseTemplate>();
         obj.name = nameToken != null ? nameToken.Value<string>() : "no_name";
         obj.tag = !string.IsNullOrEmpty(tagValue) ? tagValue : "Untagged";
-        obj.transform.position = position;
-        obj.transform.rotation = rotation;
-        obj.transform.localScale = scale;
+        if (baseTemplate == null || baseTemplate.IsLive())
+        {
+            obj.transform.position = position;
+            obj.transform.rotation = rotation;
+            obj.transform.localScale = scale;
+        }
+
+        // Send component data to object for optional parsing
+        obj.SendMessage("HandleComponents", slotNode["components"], SendMessageOptions.DontRequireReceiver);
         
         // set parent if passed 
         // NOTE: rn only the root can be a parent

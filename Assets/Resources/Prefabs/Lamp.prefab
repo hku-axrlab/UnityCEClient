@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 5017633904872089600}
   - component: {fileID: 2053818034633451326}
   - component: {fileID: 2833766444764985363}
+  - component: {fileID: 6767910311326336069}
   m_Layer: 0
   m_Name: Lamp
   m_TagString: Untagged
@@ -127,3 +128,15 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_RenderingLayers: 1
   m_ShadowRenderingLayers: 1
+--- !u!114 &6767910311326336069
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9131692198421290309}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8e4f88fe8e5783f42ac084f554f1d7a3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LampTemplate
