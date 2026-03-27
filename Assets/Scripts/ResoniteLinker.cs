@@ -226,7 +226,8 @@ public class ResoniteLinker : MonoBehaviour
         }
 
         // Send component data to object for optional parsing
-        obj.SendMessage("HandleComponents", slotNode["components"], SendMessageOptions.DontRequireReceiver);
+        if (baseTemplate != null )
+			baseTemplate.HandleComponents(slotNode["components"]);
         
         // set parent if passed 
         // NOTE: rn only the root can be a parent

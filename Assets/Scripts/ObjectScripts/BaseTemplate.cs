@@ -22,15 +22,8 @@ public class BaseTemplate : MonoBehaviour
 		return isLive;
 	}
 
-    protected virtual void Awake()
-    {
-        // TODO: implement these
-        valueFunctions.Add("live", HandleLive);
-		valueFunctions.Add("visible", HandleActive);
-	}
-
-	protected virtual void HandleComponents( JToken components )
-    {
+	public void HandleComponents(JToken components)
+	{
 		// parse & apply component data
 		foreach (var component in components)
 		{
@@ -38,13 +31,20 @@ public class BaseTemplate : MonoBehaviour
 			if (type.Contains("DynamicValueVariable"))
 			{
 				string varName = component["members"]["VariableName"]["value"].Value<string>();
-				if (isLive || varName == "live")	// only apply if live, excluding live variable itself
+				if (isLive || varName == "live")    // only apply if live, excluding live variable itself
 				{
 					if (valueFunctions.ContainsKey(varName))
 						valueFunctions[varName](component["members"]);
 				}
 			}
 		}
+	}
+
+	protected virtual void Awake()
+    {
+        // TODO: implement these
+        valueFunctions.Add("live", HandleLive);
+		valueFunctions.Add("visible", HandleActive);
 	}
 
 	private void HandleLive( JToken members )
