@@ -11,6 +11,7 @@ using UnityEngine;
 
 public class ResoniteLinker : MonoBehaviour
 {
+    [SerializeField] private string ipAddress = "localhost";
     [SerializeField] private uint port = 0;
 
 	[SerializeField] private GameObject rootPrefab; // do we need one of these?
@@ -50,8 +51,8 @@ public class ResoniteLinker : MonoBehaviour
             {
                 // attempt setup socket to client
                 socket = new ClientWebSocket();
-                Debug.Log($"Attempting connection to ws://localhost:{port}");
-                await socket.ConnectAsync(new Uri($"ws://localhost:{port}"), cts.Token);
+                Debug.Log($"Attempting connection to ws://{ipAddress}:{port}");
+                await socket.ConnectAsync(new Uri($"ws://{ipAddress}:{port}"), cts.Token);
                 Debug.Log("Connected to CalibrationEnv");
 
                 // start receiving on this client
@@ -183,6 +184,13 @@ public class ResoniteLinker : MonoBehaviour
             float z = scaleToken["z"]?.Value<float>() ?? 1f;
             scale = new Vector3(x, y, z);
         }
+        
+        if (tagValue == "vRoot")
+        {
+            // set proxy position & rotation
+            VirtualRoot.proxyPosition = position;
+            VirtualRoot.proxyRotation = rotation;
+        }
 
         // setup or reuse GO based on id
         GameObject obj;
@@ -220,8 +228,8 @@ public class ResoniteLinker : MonoBehaviour
         obj.tag = !string.IsNullOrEmpty(tagValue) ? tagValue : "Untagged";
         if (baseTemplate == null || baseTemplate.IsLive())
         {
-            obj.transform.position = position;
-            obj.transform.rotation = rotation;
+            obj.transform.position = VirtualRoot.TransformPosition(position);
+            obj.transform.rotation = VirtualRoot.TransformRotation(rotation);
             obj.transform.localScale = scale;
         }
 
