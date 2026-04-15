@@ -1,44 +1,44 @@
 using Newtonsoft.Json.Linq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
-public class LampTemplate : BaseTemplate
+namespace UnityCEClient
 {
-	new private Light light;
-
-	protected override void Awake()
+	public class LampTemplate : BaseTemplate
 	{
-		base.Awake();
+		new private Light light;
 
-		light = GetComponent<Light>();
+		protected override void Awake()
+		{
+			base.Awake();
 
-		valueFunctions.Add("color", HandleColor);
-		valueFunctions.Add("intensity", HandleIntensity);
-		valueFunctions.Add("radius", HandleRadius);
-	}
+			light = GetComponent<Light>();
 
-	private void HandleColor(JToken variableMember)
-	{
-		Color c;
-		c.r = variableMember["value"]["r"].Value<float>();
-		c.g = variableMember["value"]["g"].Value<float>();
-		c.b = variableMember["value"]["b"].Value<float>();
-		c.a = variableMember["value"]["a"].Value<float>();
-		
-		light.color = c;
-	}
+			valueFunctions.Add("color", HandleColor);
+			valueFunctions.Add("intensity", HandleIntensity);
+			valueFunctions.Add("radius", HandleRadius);
+		}
 
-	private void HandleIntensity (JToken variableMember)
-	{
-		float intensity = variableMember["value"].Value<float>();
-		light.intensity = intensity;
-	}
+		private void HandleColor(JToken variableMember)
+		{
+			Color c;
+			c.r = variableMember["value"]["r"].Value<float>();
+			c.g = variableMember["value"]["g"].Value<float>();
+			c.b = variableMember["value"]["b"].Value<float>();
+			c.a = variableMember["value"]["a"].Value<float>();
 
-	private void HandleRadius(JToken variableMember)
-	{
-		float radius = variableMember["value"].Value<float>();
-		light.range = radius;
+			light.color = c;
+		}
+
+		private void HandleIntensity(JToken variableMember)
+		{
+			float intensity = variableMember["value"].Value<float>();
+			light.intensity = intensity;
+		}
+
+		private void HandleRadius(JToken variableMember)
+		{
+			float radius = variableMember["value"].Value<float>();
+			light.range = radius;
+		}
 	}
 }

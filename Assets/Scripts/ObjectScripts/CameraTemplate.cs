@@ -1,28 +1,28 @@
 using Newtonsoft.Json.Linq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
-public class CameraTemplate : BaseTemplate
+namespace UnityCEClient
 {
-	new private Camera camera;
-
-	protected override void Awake()
+	public class CameraTemplate : BaseTemplate
 	{
-		base.Awake();
+		new private Camera camera;
 
-		camera = GetComponent<Camera>();
-		camera.usePhysicalProperties = true;
-		camera.sensorSize = new Vector2(64, 36);	// 16:9 aspect, manually configured by comparing values from Resonite
-		valueFunctions.Add("fov", HandleFOV);
-	}
-	
-	private void HandleFOV(JToken variableMember)
-	{
-		float fov = variableMember["value"].Value<float>();
-		// TODO: implement mm to fov conversion
-		// 13mm = 112 degrees, 250mm = 10 degrees
-		camera.focalLength = fov;
+		protected override void Awake()
+		{
+			base.Awake();
+
+			camera = GetComponent<Camera>();
+			camera.usePhysicalProperties = true;
+			camera.sensorSize = new Vector2(64, 36);    // 16:9 aspect, manually configured by comparing values from Resonite
+			valueFunctions.Add("fov", HandleFOV);
+		}
+
+		private void HandleFOV(JToken variableMember)
+		{
+			float fov = variableMember["value"].Value<float>();
+			// TODO: implement mm to fov conversion
+			// 13mm = 112 degrees, 250mm = 10 degrees
+			camera.focalLength = fov;
+		}
 	}
 }
