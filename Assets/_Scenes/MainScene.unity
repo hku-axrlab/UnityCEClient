@@ -396,7 +396,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e87ffa01b995ceb4dbcb9db61f42a484, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ResoniteLinker
-  ipAddress: 192.168.50.119
+  ipAddress: 127.0.0.1
   port: 4196
   rootPrefab: {fileID: 2929397269302186400, guid: 2013d7594af90c44ab4878db97e649f0, type: 3}
   prefabMap: {fileID: 11400000, guid: edccb1c94107c874e892b9fddb6bcf69, type: 2}

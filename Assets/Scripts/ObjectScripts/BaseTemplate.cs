@@ -22,20 +22,16 @@ public class BaseTemplate : MonoBehaviour
 		return isLive;
 	}
 
-	public void HandleComponents(JToken components)
+	public void HandleVariables(JToken data)
 	{
 		// parse & apply component data
-		foreach (var component in components)
+		foreach (var variable in data)
 		{
-			var type = component["componentType"].Value<string>();
-			if (type.Contains("DynamicValueVariable"))
+			string varName = variable["name"].Value<string>();
+			if (isLive || varName == "live")    // only apply if live, excluding live variable itself
 			{
-				string varName = component["members"]["VariableName"]["value"].Value<string>();
-				if (isLive || varName == "live")    // only apply if live, excluding live variable itself
-				{
-					if (valueFunctions.ContainsKey(varName))
-						valueFunctions[varName](component["members"]);
-				}
+				if (valueFunctions.ContainsKey(varName))
+					valueFunctions[varName](variable["value"]);
 			}
 		}
 	}
@@ -47,14 +43,14 @@ public class BaseTemplate : MonoBehaviour
 		valueFunctions.Add("visible", HandleActive);
 	}
 
-	private void HandleLive( JToken members )
+	private void HandleLive( JToken varJson )
 	{
-		isLive = members["Value"]["value"].Value<bool>();
+		isLive = varJson["value"].Value<bool>();
 	}
 
-	private void HandleActive(JToken members)
+	private void HandleActive(JToken varJson)
 	{
-		isActive = members["Value"]["value"].Value<bool>();
+		isActive = varJson["value"].Value<bool>();
 		if (!isActive && gameObject.activeInHierarchy )
 			gameObject.SetActive(false);
 		else

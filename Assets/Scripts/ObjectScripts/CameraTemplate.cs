@@ -20,7 +20,7 @@ public class CameraTemplate : BaseTemplate
 	
 	private void HandleFOV(JToken variableMember)
 	{
-		float fov = variableMember["Value"]["value"].Value<float>();
+		float fov = variableMember["value"].Value<float>();
 		// TODO: implement mm to fov conversion
 		// 13mm = 112 degrees, 250mm = 10 degrees
 		camera.focalLength = fov;

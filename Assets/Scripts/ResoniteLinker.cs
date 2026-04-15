@@ -15,29 +15,32 @@ public class ResoniteLinker : MonoBehaviour
     [SerializeField] private uint port = 0;
 
 	[SerializeField] private GameObject rootPrefab; // do we need one of these?
-	[SerializeField] private ResonitePrefabMap prefabMap;    
-    
-	/*
-    [SerializeField] private GameObject lampPrefab;
-    [SerializeField] private GameObject audioPrefab;
-    [SerializeField] private List<CustomTagObjects> customTagObjects;
-
-    [Serializable]
-    public struct CustomTagObjects
-    {
-        [SerializeField] public string tag;
-        [SerializeField] public GameObject prefab;
-    }
-    */
+	[SerializeField] private ResonitePrefabMap prefabMap;
 
 	private ClientWebSocket socket = new ClientWebSocket();
     private CancellationTokenSource cts = new CancellationTokenSource();
 
     private Dictionary<string, GameObject> slotObjects = new Dictionary<string, GameObject>();
 
+    [System.Serializable]
+    struct ConnectMsg
+    {
+        public int msgType;
+		public string clientType;
+		public int sendRate;
+
+        public ConnectMsg( int _sendRate ) 
+        {
+            msgType = 0;
+            clientType = "unity";
+            sendRate = _sendRate;
+		}
+    }
+
     async void Start()
     {
-        Debug.Log("Starting resonite linker");
+		Application.runInBackground = true;
+		Debug.Log("Starting resonite linker");
 
         // connect asynch with CalibrationEnv 
         _ = ConnectLoop();
@@ -55,8 +58,11 @@ public class ResoniteLinker : MonoBehaviour
                 await socket.ConnectAsync(new Uri($"ws://{ipAddress}:{port}"), cts.Token);
                 Debug.Log("Connected to CalibrationEnv");
 
-                // start receiving on this client
-                await ReceiveLoop();
+				ConnectMsg connectMsg = new ConnectMsg(30);
+                await SendJsonFromObject(connectMsg);
+
+				// start receiving on this client
+				await ReceiveLoop();
             }
             catch (Exception ex)
             {
@@ -66,6 +72,15 @@ public class ResoniteLinker : MonoBehaviour
             }
         }
     }
+
+    private async Task SendJsonFromObject(object o)
+    {
+		JObject json = JObject.FromObject(o);
+		var encoded = Encoding.UTF8.GetBytes(json.ToString());
+		var buffer = new ArraySegment<Byte>(encoded, 0, encoded.Length);
+
+		await socket.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None);
+	}
 
     private async Task ReceiveLoop()
     {
@@ -115,30 +130,31 @@ public class ResoniteLinker : MonoBehaviour
         try
         {
             var root = JObject.Parse(msg);
-            var responsesNode = root["responses"];
+            var objects = root["objects"];
+			var users = root["users"];
 
-            foreach (var item in responsesNode)
+			foreach (var item in objects)
             {
-                var dataNode = item["data"];
-                if (dataNode == null)
-                {
-                    Debug.LogError($"dataNode was null, in {item}!");
-                    return;
-                }
-
                 // Recursive parse van de root slot
-                ParseSlot(dataNode);
+                ParseObject(item);
             }
-        }
+
+			foreach (var item in users)
+			{
+				// Recursive parse van de root slot
+				// TODO:
+                // ParseUser(item);
+			}
+		}
         catch (Exception ex)
         {
             Debug.LogError("Failed to parse JSON: " + ex);
         }
     }
 
-    private void ParseSlot(JToken slotNode, Transform parent = null)
+    private void ParseObject(JToken objectJson, Transform parent = null)
     {
-        if (slotNode == null) return;
+        if (objectJson == null) return;
 
         // define vars 
         Vector3 position = Vector3.zero;
@@ -146,12 +162,14 @@ public class ResoniteLinker : MonoBehaviour
         Quaternion rotation = Quaternion.identity;
 
         // grab data from slot 
-        var id = slotNode["id"]?.Value<string>();
-        var nameToken = slotNode["name"]?["value"];
-        var tagToken = slotNode["tag"]?["value"];
-        var posToken = slotNode["position"]?["value"];
-        var rotToken = slotNode["rotation"]?["value"];
-        var scaleToken = slotNode["scale"]?["value"];
+        var id = objectJson["id"]?.Value<string>();
+        var nameToken = objectJson["name"];
+        var tagToken = objectJson["tag"];
+		var homeToken = objectJson["home"]?.Value<string>();
+		var transform = objectJson["transform"];
+        var posToken = transform["position"];
+        var rotToken = transform["rotation"];
+        var scaleToken = transform["scale"];
 
         // skip if no id and/or tag
         // TODO: non tagged shouldn't be send from CalibrationEnv
@@ -162,34 +180,35 @@ public class ResoniteLinker : MonoBehaviour
         // process data
         if (posToken != null)
         {
-            float x = posToken["x"]?.Value<float>() ?? 0f;
-            float y = posToken["y"]?.Value<float>() ?? 0f;
-            float z = posToken["z"]?.Value<float>() ?? 0f;
+            float x = posToken["X"]?.Value<float>() ?? 0f;
+            float y = posToken["Y"]?.Value<float>() ?? 0f;
+            float z = posToken["Z"]?.Value<float>() ?? 0f;
             position = new Vector3(x, y, z);
         }
 
         if (rotToken != null)
         {
-            float x = rotToken["x"]?.Value<float>() ?? 0f;
-            float y = rotToken["y"]?.Value<float>() ?? 0f;
-            float z = rotToken["z"]?.Value<float>() ?? 0f;
-            float w = rotToken["w"]?.Value<float>() ?? 1f;
+            float x = rotToken["X"]?.Value<float>() ?? 0f;
+            float y = rotToken["Y"]?.Value<float>() ?? 0f;
+            float z = rotToken["Z"]?.Value<float>() ?? 0f;
+            float w = rotToken["W"]?.Value<float>() ?? 1f;
             rotation = new Quaternion(x, y, z, w);
         }
 
         if (scaleToken != null)
         {
-            float x = scaleToken["x"]?.Value<float>() ?? 1f;
-            float y = scaleToken["y"]?.Value<float>() ?? 1f;
-            float z = scaleToken["z"]?.Value<float>() ?? 1f;
+            float x = scaleToken["X"]?.Value<float>() ?? 1f;
+            float y = scaleToken["Y"]?.Value<float>() ?? 1f;
+            float z = scaleToken["Z"]?.Value<float>() ?? 1f;
             scale = new Vector3(x, y, z);
         }
         
+        // TODO: assign vRoot based on home...
         if (tagValue == "vRoot")
         {
             // set proxy position & rotation
-            VirtualRoot.proxyPosition = position;
-            VirtualRoot.proxyRotation = rotation;
+            VirtualRoot.SetProxyPosition(homeToken, position);
+            VirtualRoot.SetProxyRotation(homeToken, rotation);
         }
 
         // setup or reuse GO based on id
@@ -228,14 +247,14 @@ public class ResoniteLinker : MonoBehaviour
         obj.tag = !string.IsNullOrEmpty(tagValue) ? tagValue : "Untagged";
         if (baseTemplate == null || baseTemplate.IsLive())
         {
-            obj.transform.position = VirtualRoot.TransformPosition(position);
-            obj.transform.rotation = VirtualRoot.TransformRotation(rotation);
+            obj.transform.position = VirtualRoot.TransformPosition(homeToken, position);
+            obj.transform.rotation = VirtualRoot.TransformRotation(homeToken, rotation);
             obj.transform.localScale = scale;
         }
 
         // Send component data to object for optional parsing
         if (baseTemplate != null )
-			baseTemplate.HandleComponents(slotNode["components"]);
+			baseTemplate.HandleVariables(objectJson["data"]);
         
         // set parent if passed 
         // NOTE: rn only the root can be a parent
