@@ -15,7 +15,7 @@ namespace UnityCEClient
 	}
 
 	[System.Serializable]
-	public struct Vector3Data
+	public class Vector3Data
 	{
 		public float x, y, z;
 
@@ -35,7 +35,7 @@ namespace UnityCEClient
 	}
 
 	[System.Serializable]
-	public struct QuaternionData
+	public class QuaternionData
 	{
 		public float x, y, z, w;
 
@@ -57,7 +57,7 @@ namespace UnityCEClient
 	}
 
 	[System.Serializable]
-	public struct TransformData
+	public class TransformData
 	{
 		public Vector3Data position;
 		public QuaternionData rotation;
@@ -128,15 +128,16 @@ namespace UnityCEClient
 
 		protected virtual void Start()
 		{
-			// Force a specific tag for now
-			ResoniteLinker.RegisterUser(this);
-		}
+            data.id = id;
+            data.name = userName;
+
+            // Force a specific tag for now
+            ResoniteLinker.RegisterUser(this);
+        }
 
 		protected virtual void Update()
 		{
 			// Update our user data
-			data.id = id;
-			data.name = userName;
 			if (data.boneNames == null || data.boneTransforms == null)
 			{
 				data.boneNames = new List<string>(bones.Count);
