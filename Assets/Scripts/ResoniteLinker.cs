@@ -58,10 +58,6 @@ namespace UnityCEClient
         private Dictionary<string, LocalUser> localUsers = new Dictionary<string, LocalUser>();
         private Dictionary<string, RemoteUser> remoteUsers = new Dictionary<string, RemoteUser>();
 
-
-        private Queue<ThreadEvent> spawnQueue = new Queue<ThreadEvent>();
-        private HashSet<string> spawnDict = new HashSet<string>();
-
         [System.Serializable]
         struct ConnectMsg
         {
@@ -90,21 +86,6 @@ namespace UnityCEClient
 
             // connect asynch with CalibrationEnv 
             _ = ConnectLoop();
-        }
-
-        private void LateUpdate()
-        {
-            lock (spawnQueue)
-            {
-                foreach (var item in spawnQueue)
-                {
-                    GameObject obj = Instantiate((GameObject)item.data);
-                    spawnedObjects.Add(item.id, obj);
-                    spawnedObjectTemplateScripts.Add(item.id, obj.GetComponent<BaseTemplate>());
-                }
-                spawnQueue.Clear();
-                spawnDict.Clear();
-            }
         }
 
         private async Task ConnectLoop()
