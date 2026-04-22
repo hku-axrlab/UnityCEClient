@@ -21,6 +21,24 @@ namespace UnityCEClient
         ClientData = 2
     }
 
+    public enum ThreadEventType
+    {
+        InstiantiateRequest = 0,
+    }
+
+    public struct ThreadEvent
+    {
+        public ThreadEventType type;
+        public string id;
+        public object data;
+        public ThreadEvent(ThreadEventType type, string id, object data)
+        {
+            this.type = type;
+            this.id = id;
+            this.data = data;
+        }
+    }
+
     public class ResoniteLinker : MonoBehaviour
     {
         [SerializeField] private string ipAddress = "localhost";
@@ -35,7 +53,11 @@ namespace UnityCEClient
         private CancellationTokenSource cts = new CancellationTokenSource();
 
         private Dictionary<string, GameObject> slotObjects = new Dictionary<string, GameObject>();
+        private Dictionary<string, BaseTemplate> slotTemplates = new Dictionary<string, BaseTemplate>();
         private Dictionary<string, LocalUser> localUsers = new Dictionary<string, LocalUser>();
+
+        private Queue<ThreadEvent> spawnQueue = new Queue<ThreadEvent>();
+        private HashSet<string> spawnDict = new HashSet<string>();
 
         [System.Serializable]
         struct ConnectMsg
@@ -57,13 +79,29 @@ namespace UnityCEClient
 			_instance = this;
 		}
 
-		void Start()
+
+        void Start()
         {
             Application.runInBackground = true;
             Debug.Log("Starting resonite linker");
 
             // connect asynch with CalibrationEnv 
             _ = ConnectLoop();
+        }
+
+        private void LateUpdate()
+        {
+            lock (spawnQueue)
+            {
+                foreach (var item in spawnQueue)
+                {
+                    GameObject obj = Instantiate((GameObject)item.data);
+                    slotObjects.Add(item.id, obj);
+                    slotTemplates.Add(item.id, obj.GetComponent<BaseTemplate>());
+                }
+                spawnQueue.Clear();
+                spawnDict.Clear();
+            }
         }
 
         private async Task ConnectLoop()
@@ -81,8 +119,10 @@ namespace UnityCEClient
                     ConnectMsg connectMsg = new ConnectMsg(30);
                     await SendJsonFromObject(connectMsg);
 
+                    var mainCtx = SynchronizationContext.Current;
+
                     // start receiving on this client
-                    Task recTask = Task.Run(() => ReceiveLoop(cts.Token), cts.Token);
+                    Task recTask = Task.Run(() => ReceiveLoop(cts.Token, mainCtx), cts.Token);
                     Task sendTask = Task.Run(() => SendLoop(cts.Token), cts.Token);
 
 					// Block until EITHER task finishes (normally or with an error)
@@ -109,7 +149,7 @@ namespace UnityCEClient
             await socket.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None);
         }
 
-        private async Task ReceiveLoop(CancellationToken token)
+        private async Task ReceiveLoop(CancellationToken token, SynchronizationContext syncCtx)
         {
             // TODO: consider buffer size, 
             // but works for now, ey.
@@ -140,7 +180,7 @@ namespace UnityCEClient
                     // get and parse msg
                     string msg = Encoding.UTF8.GetString(ms.ToArray());
                     // Debug.Log("Received message:\n" + msg);
-                    ParseJSON(msg);
+                    ParseJSON(msg, syncCtx);
                 }
             }
             catch (Exception ex)
@@ -165,7 +205,7 @@ namespace UnityCEClient
 			}
 		}
 
-		private void ParseJSON(string msg)
+		private void ParseJSON(string msg, SynchronizationContext syncCtx)
         {
             if (string.IsNullOrWhiteSpace(msg))
                 return;
@@ -179,7 +219,7 @@ namespace UnityCEClient
                 foreach (var item in objects)
                 {
                     // Recursive parse van de root slot
-                    ParseObject(item);
+                    ParseObject(item, syncCtx);
                 }
 
                 foreach (var item in users)
@@ -195,7 +235,7 @@ namespace UnityCEClient
             }
         }
 
-        private void ParseObject(JToken objectJson, Transform parent = null)
+        private void ParseObject(JToken objectJson, SynchronizationContext syncCtx, Transform parent = null)
         {
             if (objectJson == null) return;
 
@@ -262,14 +302,16 @@ namespace UnityCEClient
                 // but make exception for root
                 if (id == "Root")
                 {
-                    obj = Instantiate(rootPrefab);
+                    syncCtx.Post(_ => CreateObject(rootPrefab, id, nameToken != null ? nameToken.Value<string>() : "no_name", tagValue), null);
+                    return;
                 }
                 else
                 {
                     // All tag values should be in map
                     if (prefabMap.map.Contains(tagValue))
                     {
-                        obj = Instantiate(prefabMap.map[tagValue]);
+                        syncCtx.Send(_ => CreateObject(prefabMap.map[tagValue], id, nameToken != null ? nameToken.Value<string>() : "no_name", tagValue), null);
+                        obj = slotObjects[id];
                     }
                     else
                     {
@@ -278,31 +320,24 @@ namespace UnityCEClient
                         return;
                     }
                 }
-
-                obj.name = id;
-                slotObjects[id] = obj;
             }
 
             // update parent and transform
             // FIXME: this GetComponent feels slow here, maybe we can cache it for spawned objects?
-            BaseTemplate baseTemplate = obj.GetComponent<BaseTemplate>();
-            obj.name = nameToken != null ? nameToken.Value<string>() : "no_name";
-            obj.tag = !string.IsNullOrEmpty(tagValue) ? tagValue : "Untagged";
+            BaseTemplate baseTemplate = slotTemplates[id];           
             if (baseTemplate == null || baseTemplate.IsLive())
             {
-                obj.transform.position = VirtualRoot.TransformPosition(homeToken, position);
-                obj.transform.rotation = VirtualRoot.TransformRotation(homeToken, rotation);
-                obj.transform.localScale = scale;
+                syncCtx.Post(_ => TransformObject(obj, VirtualRoot.TransformPosition(homeToken, position), VirtualRoot.TransformRotation(homeToken, rotation), scale), null);
             }
 
             // Send component data to object for optional parsing
             if (baseTemplate != null)
-                baseTemplate.HandleVariables(objectJson["data"]);
+                syncCtx.Post(_ => baseTemplate.HandleVariables(objectJson["data"]), null);
 
             // set parent if passed 
             // NOTE: rn only the root can be a parent
             // since we only call to depth = 0
-            if (parent != null) obj.transform.parent = parent;
+            if (parent != null) syncCtx.Post( _ => obj.transform.parent = parent, null);
 
             // recursive call for children
             // TODO: don't know if this is still usefull
@@ -315,6 +350,22 @@ namespace UnityCEClient
                     ParseSlot(child, obj.transform);
                 }
             }*/
+        }
+
+        private void CreateObject(GameObject prefab, string id, string name, string tag)
+        {
+            GameObject obj = Instantiate(prefab);
+            obj.name = name;
+            obj.tag = tag;
+            slotObjects.Add(id, obj);
+            slotTemplates.Add(id, obj.GetComponent<BaseTemplate>());
+        }
+
+        private void TransformObject(GameObject obj, Vector3 position, Quaternion rotation, Vector3 scale)
+        {
+            obj.transform.position = position;
+            obj.transform.rotation = rotation;
+            obj.transform.localScale = scale;
         }
 
         private void OnDestroy()
