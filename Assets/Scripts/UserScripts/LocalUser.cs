@@ -1,6 +1,7 @@
-using UnityEngine;
-using System.Collections.Generic;
 using System;
+using System.Collections.Generic;
+using UnityEditor;
+using UnityEngine;
 
 namespace UnityCEClient
 {
@@ -153,7 +154,7 @@ namespace UnityCEClient
 		public const int USER_SEND_DELAY = 33;
 
 		public string userName = "UnityUser";
-		public string id = Guid.NewGuid().ToString();
+		public string id = "";
 
 		public List<Transform> bones = new List<Transform>();
 
@@ -165,6 +166,9 @@ namespace UnityCEClient
 
 		protected virtual void Start()
 		{
+			if ( string.IsNullOrEmpty(id) )
+				id = Guid.NewGuid().ToString();
+
             data.id = id;
             data.name = userName;
 
