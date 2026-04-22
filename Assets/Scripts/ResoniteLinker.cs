@@ -45,16 +45,19 @@ namespace UnityCEClient
         [SerializeField] private uint port = 0;
 
         [SerializeField] private GameObject rootPrefab; // do we need one of these?
-        [SerializeField] private ResonitePrefabMap prefabMap;
+        [SerializeField] private ResonitePrefabMap objectMap;
+        [SerializeField] private ResonitePrefabMap userMap;
 
         private static ResoniteLinker _instance;
 
         private ClientWebSocket socket = new ClientWebSocket();
         private CancellationTokenSource cts = new CancellationTokenSource();
 
-        private Dictionary<string, GameObject> slotObjects = new Dictionary<string, GameObject>();
-        private Dictionary<string, BaseTemplate> slotTemplates = new Dictionary<string, BaseTemplate>();
+        private Dictionary<string, GameObject> spawnedObjects = new Dictionary<string, GameObject>();
+        private Dictionary<string, BaseTemplate> spawnedObjectTemplateScripts = new Dictionary<string, BaseTemplate>();
         private Dictionary<string, LocalUser> localUsers = new Dictionary<string, LocalUser>();
+        private Dictionary<string, RemoteUser> remoteUsers = new Dictionary<string, RemoteUser>();
+
 
         private Queue<ThreadEvent> spawnQueue = new Queue<ThreadEvent>();
         private HashSet<string> spawnDict = new HashSet<string>();
@@ -96,8 +99,8 @@ namespace UnityCEClient
                 foreach (var item in spawnQueue)
                 {
                     GameObject obj = Instantiate((GameObject)item.data);
-                    slotObjects.Add(item.id, obj);
-                    slotTemplates.Add(item.id, obj.GetComponent<BaseTemplate>());
+                    spawnedObjects.Add(item.id, obj);
+                    spawnedObjectTemplateScripts.Add(item.id, obj.GetComponent<BaseTemplate>());
                 }
                 spawnQueue.Clear();
                 spawnDict.Clear();
@@ -226,13 +229,67 @@ namespace UnityCEClient
                 {
                     // Recursive parse van de root slot
                     // TODO:
-                    // ParseUser(item);
+                    ParseUser(item, syncCtx);
                 }
             }
             catch (Exception ex)
             {
                 Debug.LogError("Failed to parse JSON: " + ex);
             }
+        }
+
+        private void ParseUser(JToken userJson, SynchronizationContext syncCtx)
+        {
+            if (userJson == null) return;
+
+            // grab data from slot 
+            var id = userJson["id"]?.Value<string>();
+            var name = userJson["name"].Value<string>();
+            var home = userJson["home"].Value<string>();
+            var boneNames = userJson["boneNames"];
+            var boneTransforms = userJson["boneTransforms"];
+
+            RemoteUser user;
+            // Find or create a RemoteUser for this user
+            if (!remoteUsers.ContainsKey(id)){
+                if (userMap.map.ContainsKey(name))
+                    syncCtx.Send(_ => CreateUser(userMap.map[name], id, name, home), null);
+                else
+                    syncCtx.Send(_ => CreateUser((GameObject)Resources.Load("Prefabs/Users/defaultRemoteUser"), id, name, home), null);
+            }
+            user = remoteUsers[id];
+
+            List<string> parsedBoneNames = new List<string>();
+            List<TransformData> parsedBoneTransforms = new List<TransformData>();
+
+            foreach (var boneName in boneNames) {
+                parsedBoneNames.Add(boneName.Value<string>());
+            }
+
+            foreach(var boneTransform in boneTransforms.AsEnumerable())
+            {
+                var position = boneTransform["position"];
+                var rotation = boneTransform["rotation"];
+                var scale = boneTransform["scale"];
+
+                TransformData data = new TransformData();
+                data.position.x = position["X"].Value<float>();
+                data.position.y = position["Y"].Value<float>();
+                data.position.z = position["Z"].Value<float>();
+
+                data.rotation.x = rotation["X"].Value<float>();
+                data.rotation.y = rotation["Y"].Value<float>();
+                data.rotation.z = rotation["Z"].Value<float>();
+                data.rotation.w = rotation["W"].Value<float>();
+
+                data.scale.x = scale["X"].Value<float>();
+                data.scale.y = scale["Y"].Value<float>();
+                data.scale.z = scale["Z"].Value<float>();
+
+                parsedBoneTransforms.Add(data);
+            }
+
+            syncCtx.Post(_ => user.ApplyTransforms(parsedBoneNames.ToArray(), parsedBoneTransforms.ToArray()), null);
         }
 
         private void ParseObject(JToken objectJson, SynchronizationContext syncCtx, Transform parent = null)
@@ -296,7 +353,7 @@ namespace UnityCEClient
 
             // setup or reuse GO based on id
             GameObject obj;
-            if (!slotObjects.TryGetValue(id, out obj))
+            if (!spawnedObjects.TryGetValue(id, out obj))
             {
                 // setup object based on tag,
                 // but make exception for root
@@ -308,10 +365,10 @@ namespace UnityCEClient
                 else
                 {
                     // All tag values should be in map
-                    if (prefabMap.map.Contains(tagValue))
+                    if (objectMap.map.Contains(tagValue))
                     {
-                        syncCtx.Send(_ => CreateObject(prefabMap.map[tagValue], id, nameToken != null ? nameToken.Value<string>() : "no_name", tagValue), null);
-                        obj = slotObjects[id];
+                        syncCtx.Send(_ => CreateObject(objectMap.map[tagValue], id, nameToken != null ? nameToken.Value<string>() : "no_name", tagValue), null);
+                        obj = spawnedObjects[id];
                     }
                     else
                     {
@@ -324,7 +381,7 @@ namespace UnityCEClient
 
             // update parent and transform
             // FIXME: this GetComponent feels slow here, maybe we can cache it for spawned objects?
-            BaseTemplate baseTemplate = slotTemplates[id];           
+            BaseTemplate baseTemplate = spawnedObjectTemplateScripts[id];           
             if (baseTemplate == null || baseTemplate.IsLive())
             {
                 syncCtx.Post(_ => TransformObject(obj, VirtualRoot.TransformPosition(homeToken, position), VirtualRoot.TransformRotation(homeToken, rotation), scale), null);
@@ -352,13 +409,24 @@ namespace UnityCEClient
             }*/
         }
 
+        private void CreateUser(GameObject prefab, string id, string name, string home)
+        {
+            GameObject userObj = Instantiate(prefab);
+            userObj.name = name;
+            RemoteUser user = userObj.GetComponent<RemoteUser>();
+            user.name = name;
+            user.home = home;
+            user.id = id;
+            remoteUsers[id] = user;
+        }
+
         private void CreateObject(GameObject prefab, string id, string name, string tag)
         {
             GameObject obj = Instantiate(prefab);
             obj.name = name;
             obj.tag = tag;
-            slotObjects.Add(id, obj);
-            slotTemplates.Add(id, obj.GetComponent<BaseTemplate>());
+            spawnedObjects.Add(id, obj);
+            spawnedObjectTemplateScripts.Add(id, obj.GetComponent<BaseTemplate>());
         }
 
         private void TransformObject(GameObject obj, Vector3 position, Quaternion rotation, Vector3 scale)

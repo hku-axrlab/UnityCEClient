@@ -1360,7 +1360,8 @@ MonoBehaviour:
   ipAddress: 192.168.50.119
   port: 4196
   rootPrefab: {fileID: 2929397269302186400, guid: 2013d7594af90c44ab4878db97e649f0, type: 3}
-  prefabMap: {fileID: 11400000, guid: edccb1c94107c874e892b9fddb6bcf69, type: 2}
+  objectMap: {fileID: 11400000, guid: edccb1c94107c874e892b9fddb6bcf69, type: 2}
+  userMap: {fileID: 11400000, guid: 51d981d1aa6e2994ea39c9f5783f6f5c, type: 2}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

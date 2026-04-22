@@ -19,7 +19,12 @@ namespace UnityCEClient
 	{
 		public float x, y, z;
 
-		public Vector3Data(Vector3 source)
+        public Vector3Data()
+		{
+			x = y = z = 0;
+		}
+
+        public Vector3Data(Vector3 source)
 		{
 			x = source.x;
 			y = source.y;
@@ -32,14 +37,28 @@ namespace UnityCEClient
 			y = source.y;
 			z = source.z;
 		}
-	}
+
+        public static implicit operator Vector3(Vector3Data source)
+        {
+            Vector3 p;
+            p.x = source.x;
+            p.y = source.y;
+            p.z = source.z;
+            return p;
+        }
+    }
 
 	[System.Serializable]
 	public class QuaternionData
 	{
 		public float x, y, z, w;
 
-		public QuaternionData(Quaternion source)
+        public QuaternionData()
+        {
+            x = y = z = w = 0;
+        }
+
+        public QuaternionData(Quaternion source)
 		{
 			x = source.x;
 			y = source.y;
@@ -54,7 +73,17 @@ namespace UnityCEClient
 			z = source.z;
 			w = source.w;
 		}
-	}
+
+        public static implicit operator Quaternion(QuaternionData source)
+        {
+            Quaternion r;
+            r.x = source.x;
+            r.y = source.y;
+            r.z = source.z;
+			r.w	= source.w;
+            return r;
+        }
+    }
 
 	[System.Serializable]
 	public class TransformData
@@ -63,7 +92,15 @@ namespace UnityCEClient
 		public QuaternionData rotation;
 		public Vector3Data scale;
 
-		public static TransformData From(Transform t)
+        public TransformData()
+		{
+			position = new Vector3Data();
+			rotation = new QuaternionData();
+			scale = new Vector3Data();
+
+        }
+
+        public static TransformData From(Transform t)
 		{
 			TransformData data = new TransformData();
 
