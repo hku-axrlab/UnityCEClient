@@ -180,8 +180,12 @@ namespace UnityCEClient
 			{
 				while (socket.State == WebSocketState.Open && !token.IsCancellationRequested)
 				{
-                    await SendJsonFromObject(new UserMsg(localUsers.Values.ToArray()));
-                    await Task.Delay(LocalUser.USER_SEND_DELAY);
+                    // TODO: figure out if we need to do more accurate timing here...
+                    if (localObjects.Count > 0)
+                        await SendJsonFromObject(new ObjectMsg(localObjects.Values.ToArray()));
+                    if (localUsers.Count > 0)
+                        await SendJsonFromObject(new UserMsg(localUsers.Values.ToArray()));
+                    await Task.Delay(LocalUser.USER_SEND_DELAY);    // Calculate based on desired sendRate?
 				}
 			}
 			catch (Exception ex)

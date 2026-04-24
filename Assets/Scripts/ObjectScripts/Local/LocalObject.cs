@@ -1,9 +1,55 @@
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace UnityCEClient
 {
     public delegate (System.Type, object) ValueFunction();
+
+    [System.Serializable]
+    public struct ObjectVariable
+    {
+        public string name;
+        public string type;
+        public object value;
+    }
+    
+    [System.Serializable]
+    public struct ObjectData
+    {
+        public string id;
+        public string name;
+        public string tag;
+        public TransformData transform;
+        public ObjectVariable[] variables;
+
+        public ObjectData(ref LocalObject obj )
+        {
+            id = obj.id;
+            name = obj.name;
+            tag = obj.tag;
+            transform = TransformData.From(obj.transform);
+            variables = obj.GetVariables();
+        }
+    }
+
+    [System.Serializable]
+    public struct ObjectMsg
+    {
+        public MessageType msgType;
+        public ObjectData[] objects;
+
+        public ObjectMsg(LocalObject[] objList)
+        {
+            msgType = MessageType.ClientData;
+            objects = new ObjectData[objList.Length];
+            for( int i = 0; i < objList.Length; i++ )
+            {
+                objects[i] = new ObjectData(ref objList[i]);
+            }
+        }
+    }
 
     /// <summary>
     /// Base class for the implementation of objects that send data back into the CalibrationEnv.
@@ -42,6 +88,25 @@ namespace UnityCEClient
         private void OnDisable()
         {
             isActive = false;
+        }
+
+        public ObjectVariable[] GetVariables()
+        {
+            List<ObjectVariable> vars = new List<ObjectVariable>(objectData.Keys.Count);
+            
+            foreach( var pair in objectData )
+            {
+                ObjectVariable objVar = new ObjectVariable();
+                objVar.name = pair.Key;
+                var (type,value) = pair.Value.Invoke();
+                // TODO: standardize these to specific types?
+                objVar.type = type.ToString();
+                objVar.value = value;
+
+                vars.Add(objVar);
+            }
+
+            return vars.ToArray();
         }
 
         public (System.Type, object) GetLive()

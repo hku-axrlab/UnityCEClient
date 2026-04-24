@@ -969,7 +969,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnityCEClient.LocalVRUser
   userName: UnityUser
-  id: 87ebb529-39e2-436f-bdac-12ba32e48df0
+  id: 
   bones: []
   head: {fileID: 39195320}
   leftHand: {fileID: 2025403776}
@@ -1354,11 +1354,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 2131146813}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e87ffa01b995ceb4dbcb9db61f42a484, type: 3}
+  m_Script: {fileID: 11500000, guid: 8c1859e1564283c4da9f5d998a890b07, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ResoniteLinker
-  ipAddress: 192.168.50.119
-  port: 4196
+  ipAddress: localhost
+  port: 0
   rootPrefab: {fileID: 2929397269302186400, guid: 2013d7594af90c44ab4878db97e649f0, type: 3}
   objectMap: {fileID: 11400000, guid: edccb1c94107c874e892b9fddb6bcf69, type: 2}
   userMap: {fileID: 11400000, guid: 51d981d1aa6e2994ea39c9f5783f6f5c, type: 2}
