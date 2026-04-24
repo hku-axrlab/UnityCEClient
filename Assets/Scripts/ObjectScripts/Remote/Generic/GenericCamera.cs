@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace UnityCEClient
 {
-	public class CameraTemplate : BaseTemplate
+	public class GenericCamera : RemoteObject
 	{
 		new private Camera camera;
 

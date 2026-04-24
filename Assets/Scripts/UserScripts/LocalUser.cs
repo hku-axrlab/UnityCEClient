@@ -1,11 +1,9 @@
 using System;
 using System.Collections.Generic;
-using UnityEditor;
 using UnityEngine;
 
 namespace UnityCEClient
 {
-
 	[System.Serializable]
 	public struct UserData
 	{
@@ -173,7 +171,7 @@ namespace UnityCEClient
             data.name = userName;
 
             // Force a specific tag for now
-            ResoniteLinker.RegisterUser(this);
+            CalibrationEnvLinker.RegisterUser(this);
         }
 
 		protected virtual void Update()

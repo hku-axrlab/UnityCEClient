@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace UnityCEClient
 {
-	public class LampTemplate : BaseTemplate
+	public class GenericLamp : RemoteObject
 	{
 		new private Light light;
 

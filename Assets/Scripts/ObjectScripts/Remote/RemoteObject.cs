@@ -12,7 +12,7 @@ namespace UnityCEClient
 	/// Inherit from this for your own custom objects, if you want to also have the live/active features (make sure those variables are present in Resonite on the object root)
 	/// Make sure to call the base.Awake, and add your own valueFunctions to handle specific variables.
 	/// </summary>
-	public class BaseTemplate : MonoBehaviour
+	public class RemoteObject : MonoBehaviour
 	{
 		protected bool isActive = true;
 		protected bool isLive = true;

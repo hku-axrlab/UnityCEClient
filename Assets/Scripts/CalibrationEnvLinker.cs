@@ -39,23 +39,24 @@ namespace UnityCEClient
         }
     }
 
-    public class ResoniteLinker : MonoBehaviour
+    public class CalibrationEnvLinker : MonoBehaviour
     {
         [SerializeField] private string ipAddress = "localhost";
         [SerializeField] private uint port = 0;
 
         [SerializeField] private GameObject rootPrefab; // do we need one of these?
-        [SerializeField] private ResonitePrefabMap objectMap;
-        [SerializeField] private ResonitePrefabMap userMap;
+        [SerializeField] private RemotePrefabMap objectMap;
+        [SerializeField] private RemotePrefabMap userMap;
 
-        private static ResoniteLinker _instance;
+        private static CalibrationEnvLinker _instance;
 
         private ClientWebSocket socket = new ClientWebSocket();
         private CancellationTokenSource cts = new CancellationTokenSource();
 
         private Dictionary<string, GameObject> spawnedObjects = new Dictionary<string, GameObject>();
-        private Dictionary<string, BaseTemplate> spawnedObjectTemplateScripts = new Dictionary<string, BaseTemplate>();
+        private Dictionary<string, RemoteObject> spawnedObjectTemplateScripts = new Dictionary<string, RemoteObject>();
         private Dictionary<string, LocalUser> localUsers = new Dictionary<string, LocalUser>();
+        private Dictionary<string, LocalObject> localObjects = new Dictionary<string, LocalObject>();
         private Dictionary<string, RemoteUser> remoteUsers = new Dictionary<string, RemoteUser>();
 
         [System.Serializable]
@@ -362,7 +363,7 @@ namespace UnityCEClient
 
             // update parent and transform
             // FIXME: this GetComponent feels slow here, maybe we can cache it for spawned objects?
-            BaseTemplate baseTemplate = spawnedObjectTemplateScripts[id];           
+            RemoteObject baseTemplate = spawnedObjectTemplateScripts[id];           
             if (baseTemplate == null || baseTemplate.IsLive())
             {
                 syncCtx.Post(_ => TransformObject(obj, VirtualRoot.TransformPosition(homeToken, position), VirtualRoot.TransformRotation(homeToken, rotation), scale), null);
@@ -407,7 +408,7 @@ namespace UnityCEClient
             obj.name = name;
             obj.tag = tag;
             spawnedObjects.Add(id, obj);
-            spawnedObjectTemplateScripts.Add(id, obj.GetComponent<BaseTemplate>());
+            spawnedObjectTemplateScripts.Add(id, obj.GetComponent<RemoteObject>());
         }
 
         private void TransformObject(GameObject obj, Vector3 position, Quaternion rotation, Vector3 scale)
@@ -430,6 +431,26 @@ namespace UnityCEClient
             if (!_instance.localUsers.ContainsKey(user.id))
             {
                 _instance.localUsers[user.id] = user;
+            }
+        }
+
+        public static void RegisterObject(LocalObject obj)
+        {
+            if (_instance == null) return;
+
+            if (!_instance.localObjects.ContainsKey(obj.id))
+            {
+                _instance.localObjects[obj.id] = obj;
+            }
+        }
+
+        public static void UnregisterObject(LocalObject obj)
+        {
+            if (_instance == null) return;
+
+            if (_instance.localObjects.ContainsKey(obj.id))
+            {
+                _instance.localObjects.Remove(obj.id);
             }
         }
     }

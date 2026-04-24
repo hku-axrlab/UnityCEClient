@@ -2,8 +2,8 @@ using UnityEngine;
 
 namespace UnityCEClient
 {
-	[CreateAssetMenu(fileName = "ResonitePrefabMap", menuName = "Scriptable Objects/ResonitePrefabMap")]
-	public class ResonitePrefabMap : ScriptableObject
+	[CreateAssetMenu(fileName = "RemotePrefabMap", menuName = "Scriptable Objects/RemotePrefabMap")]
+	public class RemotePrefabMap : ScriptableObject
 	{
 		public SerializableDictionary<string, GameObject> map = new SerializableDictionary<string, GameObject>();
 	}
