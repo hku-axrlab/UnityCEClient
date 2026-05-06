@@ -39,10 +39,11 @@ namespace UnityCEClient
     {
         [SerializeField] private string ipAddress = "localhost";
         [SerializeField] private uint port = 0;
-
-        [SerializeField] private GameObject rootPrefab; // do we need one of these?
+        [Space]
         [SerializeField] private RemotePrefabMap objectMap;
         [SerializeField] private RemotePrefabMap userMap;
+        [Space]
+        [SerializeField] private bool showDebugs = false;
 
         private static CalibrationEnvLinker _instance;
 
@@ -299,9 +300,8 @@ namespace UnityCEClient
             var scaleToken = transform["scale"];
 
             // skip if no id and/or tag - shouldn't been send from CalibrationEnv anyways
-            // NOTE: this makes an exception for the root!! 
             var tagValue = tagToken != null ? tagToken.Value<string>() : "Untagged";
-            if (id != "Root" && (id == null || string.IsNullOrEmpty(tagValue))) return;
+            if (id == null || string.IsNullOrEmpty(tagValue)) return;
 
             // process data
             if (posToken != null)
@@ -341,27 +341,17 @@ namespace UnityCEClient
             GameObject obj;
             if (!spawnedObjects.TryGetValue(id, out obj))
             {
-                // setup object based on tag,
-                // but make exception for root
-                if (id == "Root")
+                // All tag values should be in map
+                if (objectMap.map.Contains(tagValue))
                 {
-                    syncCtx.Post(_ => CreateObject(rootPrefab, id, nameToken != null ? nameToken.Value<string>() : "no_name", tagValue), null);
-                    return;
+                    syncCtx.Send(_ => CreateObject(objectMap.map[tagValue], id, nameToken != null ? nameToken.Value<string>() : "no_name", tagValue), null);
+                    obj = spawnedObjects[id];
                 }
                 else
                 {
-                    // All tag values should be in map
-                    if (objectMap.map.Contains(tagValue))
-                    {
-                        syncCtx.Send(_ => CreateObject(objectMap.map[tagValue], id, nameToken != null ? nameToken.Value<string>() : "no_name", tagValue), null);
-                        obj = spawnedObjects[id];
-                    }
-                    else
-                    {
-                        // ignore or debug log missing tag
-                        // Debug.LogWarning($"Tag missing from prefabMap: {tagValue}");
-                        return;
-                    }
+                    // ignore or debug log missing tag
+                    // Debug.LogWarning($"Tag missing from prefabMap: {tagValue}");
+                    return;
                 }
             }
 
@@ -380,18 +370,6 @@ namespace UnityCEClient
             // NOTE: rn only the root can be a parent
             // since we only call to depth = 0
             if (parent != null) syncCtx.Post( _ => obj.transform.parent = parent, null);
-
-            // recursive call for children
-            // TODO: don't know if this is still usefull
-            // used to do this when started at root 
-            /*var children = slotNode["children"];
-            if (children != null)
-            {
-                foreach (var child in children)
-                {
-                    ParseSlot(child, obj.transform);
-                }
-            }*/
         }
 
         private void CreateUser(GameObject prefab, string id, string name, string home)
