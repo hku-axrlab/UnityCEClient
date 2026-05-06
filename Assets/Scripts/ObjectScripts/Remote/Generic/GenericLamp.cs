@@ -3,7 +3,8 @@ using UnityEngine;
 
 namespace UnityCEClient
 {
-	public class GenericLamp : RemoteObject
+    [RequireComponent(typeof(Light))]
+    public class GenericLamp : RemoteObject
 	{
 		new private Light light;
 

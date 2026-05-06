@@ -1,4 +1,3 @@
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using UnityEngine;
@@ -40,7 +39,6 @@ namespace UnityCEClient
 
 		protected virtual void Awake()
 		{
-			// TODO: implement these
 			valueFunctions.Add("live", HandleLive);
 			valueFunctions.Add("visible", HandleActive);
 		}

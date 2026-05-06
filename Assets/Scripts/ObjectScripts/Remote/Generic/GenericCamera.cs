@@ -3,7 +3,8 @@ using UnityEngine;
 
 namespace UnityCEClient
 {
-	public class GenericCamera : RemoteObject
+    [RequireComponent(typeof(Camera))]
+    public class GenericCamera : RemoteObject
 	{
 		new private Camera camera;
 

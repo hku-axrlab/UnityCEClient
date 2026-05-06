@@ -1,6 +1,4 @@
-using NUnit.Framework;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using UnityCEClient;
 using UnityEngine;
 
@@ -8,7 +6,7 @@ public class RemoteUser : MonoBehaviour
 {
     public string id;
     public string home;
-    public string name;
+    public new string name;
     public bool spawnMissingTransforms = false;
 
     private Dictionary<string, Transform> foundChildren;

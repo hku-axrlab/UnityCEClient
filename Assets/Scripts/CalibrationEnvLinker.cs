@@ -1,4 +1,3 @@
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -7,10 +6,7 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Unity.VisualScripting.Antlr3.Runtime;
-using UnityEditor.Toolbars;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 namespace UnityCEClient
 {
@@ -59,7 +55,7 @@ namespace UnityCEClient
         private Dictionary<string, LocalObject> localObjects = new Dictionary<string, LocalObject>();
         private Dictionary<string, RemoteUser> remoteUsers = new Dictionary<string, RemoteUser>();
 
-        [System.Serializable]
+        [Serializable]
         struct ConnectMsg
         {
             public int msgType;
@@ -79,8 +75,13 @@ namespace UnityCEClient
 			_instance = this;
 		}
 
+        private void OnDestroy()
+        {
+            cts.Cancel();
+            socket?.Dispose();
+        }
 
-        void Start()
+        private void Start()
         {
             Application.runInBackground = true;
             Debug.Log("Starting resonite linker");
@@ -297,8 +298,7 @@ namespace UnityCEClient
             var rotToken = transform["rotation"];
             var scaleToken = transform["scale"];
 
-            // skip if no id and/or tag
-            // TODO: non tagged shouldn't be send from CalibrationEnv
+            // skip if no id and/or tag - shouldn't been send from CalibrationEnv anyways
             // NOTE: this makes an exception for the root!! 
             var tagValue = tagToken != null ? tagToken.Value<string>() : "Untagged";
             if (id != "Root" && (id == null || string.IsNullOrEmpty(tagValue))) return;
@@ -366,7 +366,6 @@ namespace UnityCEClient
             }
 
             // update parent and transform
-            // FIXME: this GetComponent feels slow here, maybe we can cache it for spawned objects?
             RemoteObject baseTemplate = spawnedObjectTemplateScripts[id];           
             if (baseTemplate == null || baseTemplate.IsLive())
             {
@@ -420,12 +419,6 @@ namespace UnityCEClient
             obj.transform.position = position;
             obj.transform.rotation = rotation;
             obj.transform.localScale = scale;
-        }
-
-        private void OnDestroy()
-        {
-            cts.Cancel();
-            socket?.Dispose();
         }
 
         public static void RegisterUser(LocalUser user)
