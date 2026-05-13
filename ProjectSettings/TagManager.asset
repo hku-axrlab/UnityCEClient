@@ -10,6 +10,8 @@ TagManager:
   - Lamp
   - Cone
   - TinyCapsule
+  - vRoot
+  - Femto
   layers:
   - Default
   - TransparentFX

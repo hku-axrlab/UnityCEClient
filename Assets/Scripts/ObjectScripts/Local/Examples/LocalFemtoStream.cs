@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace UnityCEClient
 {
-    public class FemtoStream : LocalObject
+    public class LocalFemtoStream : LocalObject
     {
         public string femtoURL = "not implemented";
 
