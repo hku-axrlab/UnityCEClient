@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace UnityCEClient
 {
-	[System.Serializable]
+	[Serializable]
 	public struct UserData
 	{
 		public string id;
@@ -13,7 +13,7 @@ namespace UnityCEClient
 		public List<TransformData> boneTransforms;
 	}
 
-	[System.Serializable]
+	[Serializable]
 	public class Vector3Data
 	{
 		public float x, y, z;
@@ -47,7 +47,7 @@ namespace UnityCEClient
         }
     }
 
-	[System.Serializable]
+	[Serializable]
 	public class QuaternionData
 	{
 		public float x, y, z, w;
@@ -84,7 +84,7 @@ namespace UnityCEClient
         }
     }
 
-	[System.Serializable]
+	[Serializable]
 	public class TransformData
 	{
 		public Vector3Data position;
@@ -123,7 +123,7 @@ namespace UnityCEClient
 		}
 	}
 
-	[System.Serializable]
+	[Serializable]
 	struct UserMsg
 	{
 		public int msgType;

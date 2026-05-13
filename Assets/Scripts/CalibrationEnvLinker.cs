@@ -1,4 +1,3 @@
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -7,10 +6,7 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Unity.VisualScripting.Antlr3.Runtime;
-using UnityEditor.Toolbars;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 namespace UnityCEClient
 {
@@ -25,10 +21,11 @@ namespace UnityCEClient
     {
         [SerializeField] private string ipAddress = "localhost";
         [SerializeField] private uint port = 0;
-
-        [SerializeField] private GameObject rootPrefab; // do we need one of these?
+        [Space]
         [SerializeField] private RemotePrefabMap objectMap;
         [SerializeField] private RemotePrefabMap userMap;
+        [Space]
+        [SerializeField] private bool showDebugs = false;
 
         private static CalibrationEnvLinker _instance;
 
@@ -41,7 +38,7 @@ namespace UnityCEClient
         private Dictionary<string, LocalObject> localObjects = new Dictionary<string, LocalObject>();
         private Dictionary<string, RemoteUser> remoteUsers = new Dictionary<string, RemoteUser>();
 
-        [System.Serializable]
+        [Serializable]
         struct ConnectMsg
         {
             public int msgType;
@@ -61,8 +58,13 @@ namespace UnityCEClient
 			_instance = this;
 		}
 
+        private void OnDestroy()
+        {
+            cts.Cancel();
+            socket?.Dispose();
+        }
 
-        void Start()
+        private void Start()
         {
             Application.runInBackground = true;
             Debug.Log("Starting resonite linker");
@@ -279,11 +281,9 @@ namespace UnityCEClient
             var rotToken = transform["rotation"];
             var scaleToken = transform["scale"];
 
-            // skip if no id and/or tag
-            // TODO: non tagged shouldn't be send from CalibrationEnv
-            // NOTE: this makes an exception for the root!! 
+            // skip if no id and/or tag - shouldn't been send from CalibrationEnv anyways
             var tagValue = tagToken != null ? tagToken.Value<string>() : "Untagged";
-            if (id != "Root" && (id == null || string.IsNullOrEmpty(tagValue))) return;
+            if (id == null || string.IsNullOrEmpty(tagValue)) return;
 
             // process data
             if (posToken != null)
@@ -323,32 +323,21 @@ namespace UnityCEClient
             GameObject obj;
             if (!spawnedObjects.TryGetValue(id, out obj))
             {
-                // setup object based on tag,
-                // but make exception for root
-                if (id == "Root")
+                // All tag values should be in map
+                if (objectMap.map.Contains(tagValue))
                 {
-                    syncCtx.Post(_ => CreateObject(rootPrefab, id, nameToken != null ? nameToken.Value<string>() : "no_name", tagValue), null);
-                    return;
+                    syncCtx.Send(_ => CreateObject(objectMap.map[tagValue], id, nameToken != null ? nameToken.Value<string>() : "no_name", tagValue), null);
+                    obj = spawnedObjects[id];
                 }
                 else
                 {
-                    // All tag values should be in map
-                    if (objectMap.map.Contains(tagValue))
-                    {
-                        syncCtx.Send(_ => CreateObject(objectMap.map[tagValue], id, nameToken != null ? nameToken.Value<string>() : "no_name", tagValue), null);
-                        obj = spawnedObjects[id];
-                    }
-                    else
-                    {
-                        // ignore or debug log missing tag
-                        // Debug.LogWarning($"Tag missing from prefabMap: {tagValue}");
-                        return;
-                    }
+                    // ignore or debug log missing tag
+                    // Debug.LogWarning($"Tag missing from prefabMap: {tagValue}");
+                    return;
                 }
             }
 
             // update parent and transform
-            // FIXME: this GetComponent feels slow here, maybe we can cache it for spawned objects?
             RemoteObject baseTemplate = spawnedObjectTemplateScripts[id];           
             if (baseTemplate == null || baseTemplate.IsLive())
             {
@@ -363,18 +352,6 @@ namespace UnityCEClient
             // NOTE: rn only the root can be a parent
             // since we only call to depth = 0
             if (parent != null) syncCtx.Post( _ => obj.transform.parent = parent, null);
-
-            // recursive call for children
-            // TODO: don't know if this is still usefull
-            // used to do this when started at root 
-            /*var children = slotNode["children"];
-            if (children != null)
-            {
-                foreach (var child in children)
-                {
-                    ParseSlot(child, obj.transform);
-                }
-            }*/
         }
 
         private void CreateUser(GameObject prefab, string id, string name, string home)
@@ -402,12 +379,6 @@ namespace UnityCEClient
             obj.transform.position = position;
             obj.transform.rotation = rotation;
             obj.transform.localScale = scale;
-        }
-
-        private void OnDestroy()
-        {
-            cts.Cancel();
-            socket?.Dispose();
         }
 
         public static void RegisterUser(LocalUser user)

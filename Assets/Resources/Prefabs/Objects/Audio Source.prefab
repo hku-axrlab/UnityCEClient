@@ -139,6 +139,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 7786720881236730640}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3015528f6eae488419e361d3a941c936, type: 3}
+  m_Script: {fileID: 11500000, guid: 80a9c2af4552ae74f8421e3b7b15538b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BaseTemplate
