@@ -25,9 +25,9 @@ namespace UnityCEClient
         public ObjectData(ref LocalObject obj )
         {
             id = obj.id;
-            name = obj.name;
-            tag = obj.tag;
-            transform = TransformData.From(obj.transform);
+            name = obj.mName;
+            tag = obj.mTag;
+            transform = obj.transformData;
             variables = obj.GetVariables();
         }
     }
@@ -58,12 +58,19 @@ namespace UnityCEClient
         public string id = string.Empty;
         public bool isActive = true;
         public bool isLive = true;
+        public string mName = "";
+        public string mTag = "";
+        public TransformData transformData;
 
         protected Dictionary<string, ValueFunction> objectData = new Dictionary<string, ValueFunction>();
 
         // Start is called once before the first execution of Update after the MonoBehaviour is created
         protected virtual void Start()
         {
+            mName = name;
+            mTag = tag;
+            transformData = new TransformData();
+
             if (string.IsNullOrEmpty(id))
                 id = System.Guid.NewGuid().ToString();
 
@@ -71,6 +78,11 @@ namespace UnityCEClient
             objectData.Add("live", GetLive);
 
             CalibrationEnvLinker.RegisterObject(this);
+        }
+
+        protected virtual void Update()
+        {
+            transformData.Update(transform);
         }
 
         private void OnDestroy()

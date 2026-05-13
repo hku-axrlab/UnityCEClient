@@ -174,7 +174,7 @@ namespace UnityCEClient
 			}
 			catch (Exception ex)
 			{
-				Debug.LogError("WebSocket receive error: " + ex.Message);
+				Debug.LogError("WebSocket receive error: " + ex.Message + ex.StackTrace);
 			}
 		}
 
