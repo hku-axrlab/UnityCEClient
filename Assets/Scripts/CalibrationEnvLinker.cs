@@ -21,24 +21,6 @@ namespace UnityCEClient
         ClientData = 2
     }
 
-    public enum ThreadEventType
-    {
-        InstiantiateRequest = 0,
-    }
-
-    public struct ThreadEvent
-    {
-        public ThreadEventType type;
-        public string id;
-        public object data;
-        public ThreadEvent(ThreadEventType type, string id, object data)
-        {
-            this.type = type;
-            this.id = id;
-            this.data = data;
-        }
-    }
-
     public class CalibrationEnvLinker : MonoBehaviour
     {
         [SerializeField] private string ipAddress = "localhost";
