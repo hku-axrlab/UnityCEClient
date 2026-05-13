@@ -22,23 +22,23 @@ namespace UnityCEClient
 		private void HandleColor(JToken variableMember)
 		{
 			Color c;
-			c.r = variableMember["value"]["r"].Value<float>();
-			c.g = variableMember["value"]["g"].Value<float>();
-			c.b = variableMember["value"]["b"].Value<float>();
-			c.a = variableMember["value"]["a"].Value<float>();
+			c.r = variableMember["r"].Value<float>();
+			c.g = variableMember["g"].Value<float>();
+			c.b = variableMember["b"].Value<float>();
+			c.a = variableMember["a"].Value<float>();
 
 			light.color = c;
 		}
 
 		private void HandleIntensity(JToken variableMember)
 		{
-			float intensity = variableMember["value"].Value<float>();
+			float intensity = variableMember.Value<float>();
 			light.intensity = intensity;
 		}
 
 		private void HandleRadius(JToken variableMember)
 		{
-			float radius = variableMember["value"].Value<float>();
+			float radius = variableMember.Value<float>();
 			light.range = radius;
 		}
 	}

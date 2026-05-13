@@ -45,12 +45,12 @@ namespace UnityCEClient
 
 		private void HandleLive(JToken varJson)
 		{
-			isLive = varJson["value"].Value<bool>();
+			isLive = varJson.Value<bool>();
 		}
 
 		private void HandleActive(JToken varJson)
 		{
-			isActive = varJson["value"].Value<bool>();
+			isActive = varJson.Value<bool>();
 			if (!isActive && gameObject.activeInHierarchy)
 				gameObject.SetActive(false);
 			else

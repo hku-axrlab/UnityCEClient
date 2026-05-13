@@ -12,7 +12,7 @@ namespace UnityCEClient
         public string type;
         public object value;
     }
-    
+
     [System.Serializable]
     public struct ObjectData
     {
@@ -112,7 +112,6 @@ namespace UnityCEClient
                 // TODO: standardize these to specific types?
                 objVar.type = type.ToString();
                 objVar.value = value;
-
                 vars.Add(objVar);
             }
 

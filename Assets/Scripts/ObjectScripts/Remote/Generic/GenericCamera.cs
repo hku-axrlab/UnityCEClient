@@ -22,7 +22,7 @@ namespace UnityCEClient
 		{
             // obtained value is actually in mm already
 			// even though JSON value is called "fov"
-            float focalLength = variableMember["value"].Value<float>();
+            float focalLength = variableMember.Value<float>();
             camera.focalLength = focalLength;
 		}
 	}

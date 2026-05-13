@@ -20,7 +20,7 @@ namespace UnityCEClient
 
         private void HandleIsPlaying(JToken variableMember)
         {
-            bool isPlaying = variableMember["value"].Value<bool>();
+            bool isPlaying = variableMember.Value<bool>();
 
             if (audioSource.isPlaying != isPlaying)
             {
@@ -33,7 +33,7 @@ namespace UnityCEClient
 
         private void HandleVolume(JToken variableMember)
         {
-            float volume = variableMember["value"].Value<float>();
+            float volume = variableMember.Value<float>();
             audioSource.volume = volume;
         }
     }
