@@ -164,10 +164,12 @@ namespace UnityCEClient
 
 		protected virtual void Start()
 		{
-			if ( string.IsNullOrEmpty(id) )
-				id = Guid.NewGuid().ToString();
+			if (string.IsNullOrEmpty(id))
+				id = Utils.GenerateId();
+			else
+				id += "-" + Utils.GenerateId();
 
-            data.id = id;
+			data.id = id;
             data.name = userName;
 
             // Force a specific tag for now
