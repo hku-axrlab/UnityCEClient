@@ -9,6 +9,8 @@ namespace UnityCEClient
 	{
 		public Transform head, leftHand, rightHand;
 
+		HumanPose pose;
+
 		protected override void Start()
 		{
 			base.Start();

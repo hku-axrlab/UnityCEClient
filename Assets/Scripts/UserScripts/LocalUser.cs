@@ -82,6 +82,16 @@ namespace UnityCEClient
 			r.w	= source.w;
             return r;
         }
+
+        public static implicit operator QuaternionData(Quaternion source)
+        {
+            QuaternionData r = new QuaternionData();
+            r.x = source.x;
+            r.y = source.y;
+            r.z = source.z;
+            r.w = source.w;
+            return r;
+        }
     }
 
 	[Serializable]
@@ -156,6 +166,9 @@ namespace UnityCEClient
 
 		public List<Transform> bones = new List<Transform>();
 
+		[Tooltip("Set this to make rotations relative to this object, for instance the initial-hips positions of a character")]
+		public Transform relativeToRotation = null;
+
 		private UserData data = new UserData();
 		public UserData GetUserData()
 		{
@@ -172,11 +185,21 @@ namespace UnityCEClient
 			data.id = id;
             data.name = userName;
 
+			if ( relativeToRotation != null )
+			{
+				// Create a Dummy transform with the initial rotation of the target
+				GameObject g = new GameObject("RelativeDummy");
+				g.transform.parent = transform;
+				g.transform.rotation = relativeToRotation.rotation;
+				g.transform.position = relativeToRotation.position;
+				relativeToRotation = g.transform;
+            }
+
             // Force a specific tag for now
             CalibrationEnvLinker.RegisterUser(this);
         }
 
-		protected virtual void Update()
+		protected virtual void LateUpdate()
 		{
 			// Update our user data
 			if (data.boneNames == null || data.boneTransforms == null)
@@ -196,6 +219,10 @@ namespace UnityCEClient
 				for (int i = 0; i < bones.Count; ++i)
 				{
 					data.boneTransforms[i].Update(bones[i]);
+					if ( relativeToRotation )
+					{
+                        data.boneTransforms[i].rotation *= Quaternion.Inverse(relativeToRotation.rotation * Quaternion.Inverse(transform.rotation));
+                    }
 				}
 			}
 		}

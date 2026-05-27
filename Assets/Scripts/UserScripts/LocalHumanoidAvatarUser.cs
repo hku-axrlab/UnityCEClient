@@ -4,9 +4,9 @@ using UnityEngine;
 
 namespace UnityCEClient
 {
-	/// <summary>
-	/// Sends avatar bones, on top of LocalUser data
-	/// </summary>
+    /// <summary>
+    /// Sends avatar bones, on top of LocalUser data
+    /// </summary>
 	public class LocalHumanoidAvatarUser : LocalUser
 	{
 		public enum BoneCollection
@@ -16,8 +16,8 @@ namespace UnityCEClient
 			Manual
 		}
 
-		[Tooltip("Generate boneTransforms automatically based on attached SkinnedMeshRenderer")]
-		public BoneCollection boneCollection = BoneCollection.NoFingers;
+		[Tooltip("If All / NoFingers, will generate boneTransforms automatically based on attached Animator")]
+		public BoneCollection boneCollection = BoneCollection.Manual;
 		[Tooltip("This will be overridden by boneCollection, unless set to Manual")]
 		public List<HumanBodyBones> selectedBones = new();
 
@@ -26,7 +26,8 @@ namespace UnityCEClient
 		private void Awake()
 		{
 			animator = GetComponent<Animator>();
-			if (animator == null) {
+
+            if (animator == null) {
 				enabled = false;
 				Debug.LogError("No Animator on LocalAvatarUser", gameObject);
 			}
@@ -57,7 +58,7 @@ namespace UnityCEClient
 
 			foreach (HumanBodyBones bone in selectedBones)
 			{
-				Transform tBone = animator.GetBoneTransform(bone);
+                Transform tBone = animator.GetBoneTransform(bone);
                 if (tBone != null)
                 {
                     tBone.name = HumanBodyBoneToHumanIK(bone);
