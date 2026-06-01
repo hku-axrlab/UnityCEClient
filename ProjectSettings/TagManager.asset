@@ -12,6 +12,7 @@ TagManager:
   - TinyCapsule
   - vRoot
   - Femto
+  - pRoot
   layers:
   - Default
   - TransparentFX

@@ -321,6 +321,15 @@ namespace UnityCEClient
                 VirtualRoot.SetProxyPosition(homeToken, position);
                 VirtualRoot.SetProxyRotation(homeToken, rotation);
             }
+            else if ( tagValue == "pRoot" )
+            {
+                // set proxy position & rotation
+                PhysicalRoot.SetProxyPosition(homeToken, position);
+                PhysicalRoot.SetProxyRotation(homeToken, rotation);
+
+                // TODO: Do we want to support arbitrarily scaling of the physical root?
+                //          Could be cool to support, but I'm not sure it's entirely viable
+            }
 
             // setup or reuse GO based on id
             GameObject obj;
