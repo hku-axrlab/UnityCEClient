@@ -18,7 +18,7 @@ MonoBehaviour:
     - Lamp
     - Audio
     - TinyCapsule
-    - Cone
+    - Cilinder
     - Femto
     m_values:
     - {fileID: 5006797038127389222, guid: f4ce03592075b1b4cb4a2ce359d970c4, type: 3}
