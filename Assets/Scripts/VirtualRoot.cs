@@ -3,14 +3,14 @@ using UnityEngine;
 
 namespace UnityCEClient
 {
-    public class VirtualRoot : MonoBehaviour
+    public class VirtualRoot : LocalObject
     {
         private static VirtualRoot Instance { get; set; }
 
         public static Dictionary<string, Vector3> proxyPositions = new Dictionary<string, Vector3>();
         public static Dictionary<string, Quaternion> proxyRotations = new Dictionary<string, Quaternion>();
 
-        private void Awake()
+        protected void Awake()
         {
             Instance = this;
         }
