@@ -22,7 +22,9 @@ public class RemoteUser : MonoBehaviour
         {
             if (foundChildren.ContainsKey(boneNames[i]))
             {
-                foundChildren[boneNames[i]].SetPositionAndRotation(boneTransforms[i].position, boneTransforms[i].rotation);
+                Vector3 p = VirtualRoot.TransformPosition(home, boneTransforms[i].position);
+                Quaternion r = VirtualRoot.TransformRotation(home, boneTransforms[i].rotation);
+                foundChildren[boneNames[i]].SetPositionAndRotation(p, r);
                 foundChildren[boneNames[i]].localScale = boneTransforms[i].scale;
             }
         }
