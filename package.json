@@ -9,4 +9,7 @@
     "email": "",
     "url": "https://axrlab.hku.nl/"
   }
+  "dependencies": {
+    "com.unity.nuget.newtonsoft-json": "3.2.2"
+  }
 }
