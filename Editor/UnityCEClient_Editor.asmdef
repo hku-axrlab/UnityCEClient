@@ -1,0 +1,18 @@
+{
+    "name": "UnityCEClient_Editor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:89f2253787ed6c544b5c31f250ae1914"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
