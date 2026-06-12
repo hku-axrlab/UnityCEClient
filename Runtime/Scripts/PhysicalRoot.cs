@@ -45,6 +45,24 @@ namespace UnityCEClient
             Instance?.CheckPrimary(home);
         }
 
+        public static Vector3 TransformPosition(Vector3 position)
+        {
+            if (Instance == null)
+                return position;
+            else
+                // position the object in the same relative position as the source vRoot (stored in proxyPosition)
+                return Instance.transform.position + Instance.transform.rotation * position;
+        }
+
+        public static Quaternion TransformRotation(Quaternion rotation)
+        {
+            if (Instance == null)
+                return rotation;
+            else
+                // rotate the object in the same relative orientation as the source vRoot (stored in proxyRotations)
+                return Instance.transform.rotation * rotation;
+        }
+
         private void CheckPrimary(string externalID)
         {
             // FIXME: For now, just accept first external primary if we are not primary

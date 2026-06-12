@@ -266,6 +266,7 @@ namespace UnityCEClient
             }
 
             syncCtx.Post(_ => user.ApplyTransforms(parsedBoneNames.ToArray(), parsedBoneTransforms.ToArray()), null);
+            syncCtx.Post(_ => user.HandleVariables(userJson["data"]), null);
         }
 
         private void ParseObject(JToken objectJson, SynchronizationContext syncCtx, Transform parent = null)
