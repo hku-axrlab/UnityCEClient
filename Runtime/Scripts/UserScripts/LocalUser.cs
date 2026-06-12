@@ -238,7 +238,7 @@ namespace UnityCEClient
         
         private void UpdateData()
         {
-            if (data.boneNames == null || data.boneTransforms == null)
+            if (data.boneNames == null || data.boneNames.Count != bones.Count)
             {
                 data.boneNames = new List<string>(bones.Count);
                 data.boneTransforms = new List<TransformData>(bones.Count);
@@ -260,6 +260,7 @@ namespace UnityCEClient
                         data.boneTransforms[i].rotation *= Quaternion.Inverse(relativeToRotation.rotation * Quaternion.Inverse(transform.rotation));
                     }
                 }
+                data.variables = GetVariables();
             }
         }
     }
