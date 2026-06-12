@@ -361,7 +361,7 @@ namespace UnityCEClient
             }
 
             // update parent and transform
-            RemoteObject baseTemplate = spawnedObjectTemplateScripts[id];           
+            RemoteObject baseTemplate = spawnedObjectTemplateScripts[id];         
             if (baseTemplate == null || baseTemplate.IsLive())
             {
                 syncCtx.Post(_ => TransformObject(obj, VirtualRoot.TransformPosition(homeToken, position), VirtualRoot.TransformRotation(homeToken, rotation), scale), null);

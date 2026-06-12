@@ -11,6 +11,7 @@ namespace UnityCEClient
         public new string name;
         public bool spawnMissingTransforms = false;
         private bool pRootRelative = false;
+        private string userType = "Default";
 
         private Dictionary<string, Transform> foundChildren;
 
@@ -19,6 +20,7 @@ namespace UnityCEClient
         protected virtual void Awake()
         {
             valueFunctions.Add("pRootRelative", HandlePRootRelative);
+            valueFunctions.Add("userType", HandleUserType);
         }
 
         public void HandleVariables(JToken data)
@@ -28,13 +30,25 @@ namespace UnityCEClient
             {
                 string varName = variable["name"].Value<string>();
                 if (valueFunctions.ContainsKey(varName))
-                    valueFunctions[varName](variable["value"]);
+                    valueFunctions[varName](variable["value"]); 
             }
         }
 
         private void HandlePRootRelative(JToken varJson)
         {
             pRootRelative = varJson.Value<bool>();
+        }
+
+        private void HandleUserType(JToken varJson)
+        {
+            userType = varJson.Value<string>();
+            if ( userType != "Default" )
+            {
+                foreach( Transform t in transform )
+                {
+                    t.gameObject.SetActive(false);
+                }
+            }
         }
 
         public void ApplyTransforms(string[] boneNames, TransformData[] boneTransforms)
