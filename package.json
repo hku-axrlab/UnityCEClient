@@ -16,7 +16,7 @@
     {
       "displayName": "Optitrack",
       "description": "Sample containing scripts & integrations for use with Optitrack Motion Capture",
-      "path": "Samples/Optitrack"
+      "path": "Samples~/Optitrack"
     }
   ]
 }
