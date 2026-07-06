@@ -73,7 +73,7 @@ namespace UnityCEClient
         private void LateUpdate()
         {
             // Follow the master pRoot (if there is one)
-            if (isPrimary || string.IsNullOrEmpty(primaryID)) return;
+            if (isPrimary || string.IsNullOrEmpty(primaryID) || proxyPositions.ContainsKey(primaryID)) return;
 
             // Position ourselves relative to the primary pRoot, in relation to its own position relative to its vRoot
             transform.position = VirtualRoot.TransformPosition(primaryID, proxyPositions[primaryID]);
