@@ -64,22 +64,22 @@ namespace UnityCEClient
             Instance?.CheckPrimary(home);
         }
 
-        public static Vector3 TransformPosition(Vector3 position)
+        public static Vector3 TransformPosition(Vector3 position, string home)
         {
             if (Instance == null)
                 return position;
             else
                 // position the object in the same relative position as the source vRoot (stored in proxyPosition)
-                return Instance.transform.position + Instance.transform.rotation * position;
+                return Instance.transform.position + ( proxyRotations[home] * Instance.transform.rotation ) * position;
         }
 
-        public static Quaternion TransformRotation(Quaternion rotation)
+        public static Quaternion TransformRotation(Quaternion rotation, string home)
         {
             if (Instance == null)
                 return rotation;
             else
                 // rotate the object in the same relative orientation as the source vRoot (stored in proxyRotations)
-                return Instance.transform.rotation * rotation;
+                return (proxyRotations[home] * Instance.transform.rotation) * rotation;
         }
 
         private void CheckPrimary(string externalID)

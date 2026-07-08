@@ -67,8 +67,8 @@ namespace UnityCEClient
                     // Workaround for environments that cannot send global transform data when parented (such as ResoniteLink)
                     if (pRootRelative)
                     {
-                        p = PhysicalRoot.TransformPosition(boneTransforms[i].position);
-                        r = PhysicalRoot.TransformRotation(boneTransforms[i].rotation);
+                        p = PhysicalRoot.TransformPosition(boneTransforms[i].position, home);
+                        r = PhysicalRoot.TransformRotation(boneTransforms[i].rotation, home);
 
                         // TODO: Support multiple physical roots per environment
                         if (!CalibrationEnvLinker.disableHacks)
