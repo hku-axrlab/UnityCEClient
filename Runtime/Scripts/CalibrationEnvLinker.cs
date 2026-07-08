@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace UnityCEClient
 {
@@ -32,6 +33,10 @@ namespace UnityCEClient
         [Space]
         [Tooltip("Enter the expected IDs of remote objects here, to auto-link them to scene objects. Make sure they match the data profile!")]
         [SerializeField] private SerializableDictionary<string, GameObject> preSpawnedObjects = new();
+
+        [Header("Hacks")]
+        public SerializableDictionary<string, Vector3> userPositionOffset = new SerializableDictionary<string, Vector3>();
+        public SerializableDictionary<string, Vector3> userRotationOffset = new SerializableDictionary<string, Vector3>();
 
         private static CalibrationEnvLinker _instance;
 
@@ -59,7 +64,43 @@ namespace UnityCEClient
             }
         }
 
-		private void Awake()
+        public static Vector3 GetUserPositionOffset(string fullName)
+        {
+            if (_instance == null) return Vector3.zero;
+            else return _instance.UserPositionOffsetFor(fullName);
+        }
+
+        public Vector3 UserPositionOffsetFor(string fullName)
+        {
+            foreach (KeyValuePair<string, Vector3> pair in userPositionOffset)
+            {
+                if (fullName.Contains(pair.Key) )
+                {
+                    return pair.Value;
+                }
+            }
+            return Vector3.zero;
+        }
+
+        public static Vector3 GetUserRotationOffset(string fullName)
+        {
+            if (_instance == null) return Vector3.zero;
+            else return _instance.UserRotationOffsetFor(fullName);
+        }
+
+        public Vector3 UserRotationOffsetFor(string fullName)
+        {
+            foreach (KeyValuePair<string, Vector3> pair in userRotationOffset)
+            {
+                if (fullName.Contains(pair.Key))
+                {
+                    return pair.Value;
+                }
+            }
+            return Vector3.zero;
+        }
+
+        private void Awake()
 		{
 			_instance = this;
 		}

@@ -69,6 +69,11 @@ namespace UnityCEClient
                     {
                         p = PhysicalRoot.TransformPosition(boneTransforms[i].position);
                         r = PhysicalRoot.TransformRotation(boneTransforms[i].rotation);
+
+                        // TODO: Support multiple physical roots per environment
+                        p = Quaternion.Euler(CalibrationEnvLinker.GetUserRotationOffset(name)) * p;
+                        p += CalibrationEnvLinker.GetUserPositionOffset(name);
+                        r *= Quaternion.Euler(CalibrationEnvLinker.GetUserRotationOffset(name));
                     }
                     else
                     {
