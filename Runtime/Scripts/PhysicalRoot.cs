@@ -73,11 +73,33 @@ namespace UnityCEClient
         private void LateUpdate()
         {
             // Follow the master pRoot (if there is one)
-            if (isPrimary || string.IsNullOrEmpty(primaryID) || proxyPositions.ContainsKey(primaryID)) return;
+            if (isPrimary || string.IsNullOrEmpty(primaryID)) return;
 
-            // Position ourselves relative to the primary pRoot, in relation to its own position relative to its vRoot
-            transform.position = VirtualRoot.TransformPosition(primaryID, proxyPositions[primaryID]);
-            transform.rotation = VirtualRoot.TransformRotation(primaryID, proxyRotations[primaryID]);
+            if ( !proxyPositions.ContainsKey(primaryID) )
+            {
+                // FIXME: There appears to a be a bug where some keys are present, but not found by ContainsKey
+                foreach( KeyValuePair<string, Vector3> pair in proxyPositions )
+                {
+                    if ( pair.Key == primaryID )
+                    {
+                        transform.position = VirtualRoot.TransformPosition(primaryID, pair.Value);// proxyPositions[primaryID]);
+                    }
+                }
+
+                foreach (KeyValuePair<string, Quaternion> pair in proxyRotations)
+                {
+                    if ( pair.Key == primaryID)
+                    {
+                        transform.rotation = VirtualRoot.TransformRotation(primaryID, pair.Value); //proxyRotations[primaryID]);
+                    }
+                }
+            }
+            else
+            {
+                // Position ourselves relative to the primary pRoot, in relation to its own position relative to its vRoot
+                transform.position = VirtualRoot.TransformPosition(primaryID, proxyPositions[primaryID]);
+                transform.rotation = VirtualRoot.TransformRotation(primaryID, proxyRotations[primaryID]);
+            }                
         }
     }
 }
