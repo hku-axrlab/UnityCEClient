@@ -70,7 +70,7 @@ namespace UnityCEClient
                 return position;
             else
                 // position the object in the same relative position as the source vRoot (stored in proxyPosition)
-                return Instance.transform.position + ( proxyRotations[home] * Instance.transform.rotation ) * position;
+                return Instance.transform.position + ( proxyRotations[home] * Instance.transform.rotation ) * position + VirtualRoot.RelativePositionTo(Instance.transform.position);
         }
 
         public static Quaternion TransformRotation(Quaternion rotation, string home)
