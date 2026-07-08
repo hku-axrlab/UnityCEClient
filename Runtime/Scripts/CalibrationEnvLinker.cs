@@ -37,6 +37,7 @@ namespace UnityCEClient
         [Header("Hacks")]
         public SerializableDictionary<string, Vector3> userPositionOffset = new SerializableDictionary<string, Vector3>();
         public SerializableDictionary<string, Vector3> userRotationOffset = new SerializableDictionary<string, Vector3>();
+        public static bool disableHacks = true;
 
         private static CalibrationEnvLinker _instance;
 
