@@ -16,6 +16,9 @@ namespace UnityCEClient
         public static Dictionary<string, Vector3> proxyPositions = new Dictionary<string, Vector3>();
         public static Dictionary<string, Quaternion> proxyRotations = new Dictionary<string, Quaternion>();
 
+        public static object proxyPositionsLock = new();
+        public static object proxyRotationsLock = new();
+
         [Tooltip("Should this client treat itself as the \"Colocation Host\"? If yes, it will ignore all co-location updates from other clients (such as the Playspace in Resonite)")]
         public bool isPrimary = false;
         private string primaryID = string.Empty;
@@ -25,22 +28,38 @@ namespace UnityCEClient
             Instance = this;
         }
 
+        public static Vector3 GetPosition()
+        {
+            return Instance.transform.position;
+        }
+
+        public static Quaternion GetRotation()
+        {
+            return Instance.transform.rotation;
+        }
+
         public static void SetProxyPosition(string home, Vector3 position)
         {
-            if (proxyPositions.ContainsKey(home))
-                proxyPositions[home] = position;
-            else
-                proxyPositions.Add(home, position);
+            lock (proxyPositionsLock)
+            {
+                if (proxyPositions.ContainsKey(home))
+                    proxyPositions[home] = position;
+                else
+                    proxyPositions.Add(home, position);
+            }
 
             Instance?.CheckPrimary(home);
         }
 
         public static void SetProxyRotation(string home, Quaternion rotation)
         {
-            if (proxyRotations.ContainsKey(home))
-                proxyRotations[home] = rotation;
-            else
-                proxyRotations.Add(home, rotation);
+            lock (proxyRotationsLock)
+            {
+                if (proxyRotations.ContainsKey(home))
+                    proxyRotations[home] = rotation;
+                else
+                    proxyRotations.Add(home, rotation);
+            }
 
             Instance?.CheckPrimary(home);
         }
@@ -78,19 +97,26 @@ namespace UnityCEClient
             if ( !proxyPositions.ContainsKey(primaryID) )
             {
                 // FIXME: There appears to a be a bug where some keys are present, but not found by ContainsKey
-                foreach( KeyValuePair<string, Vector3> pair in proxyPositions )
+
+                lock (proxyPositionsLock)
                 {
-                    if ( pair.Key == primaryID )
+                    foreach (KeyValuePair<string, Vector3> pair in proxyPositions)
                     {
-                        transform.position = VirtualRoot.TransformPosition(primaryID, pair.Value);// proxyPositions[primaryID]);
+                        if (pair.Key == primaryID)
+                        {
+                            transform.position = VirtualRoot.TransformPosition(primaryID, pair.Value);// proxyPositions[primaryID]);
+                        }
                     }
                 }
 
-                foreach (KeyValuePair<string, Quaternion> pair in proxyRotations)
+                lock (proxyRotationsLock)
                 {
-                    if ( pair.Key == primaryID)
+                    foreach (KeyValuePair<string, Quaternion> pair in proxyRotations)
                     {
-                        transform.rotation = VirtualRoot.TransformRotation(primaryID, pair.Value); //proxyRotations[primaryID]);
+                        if (pair.Key == primaryID)
+                        {
+                            transform.rotation = VirtualRoot.TransformRotation(primaryID, pair.Value); //proxyRotations[primaryID]);
+                        }
                     }
                 }
             }
