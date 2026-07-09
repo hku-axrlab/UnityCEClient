@@ -107,7 +107,6 @@ namespace UnityCEClient
             position = new Vector3Data();
             rotation = new QuaternionData();
             scale = new Vector3Data();
-
         }
 
         public static TransformData From(Transform t)
