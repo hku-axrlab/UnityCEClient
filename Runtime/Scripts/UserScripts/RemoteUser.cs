@@ -70,7 +70,7 @@ namespace UnityCEClient
                         p = PhysicalRoot.TransformPosition(boneTransforms[i].position, home);
                         r = PhysicalRoot.TransformRotation(boneTransforms[i].rotation, home);
 
-                        // TODO: Support multiple physical roots per environment
+                        // TODO: Support multiple physical roots per environment (relevant for distributed multi-user environments like Resonite)
                         if (!CalibrationEnvLinker.disableHacks)
                         {
                             p = PhysicalRoot.GetPosition() + Quaternion.Euler(CalibrationEnvLinker.GetUserRotationOffset(name)) * (p - PhysicalRoot.GetPosition());

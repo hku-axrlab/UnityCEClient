@@ -69,8 +69,12 @@ namespace UnityCEClient
             if (Instance == null)
                 return position;
             else
-                // position the object in the same relative position as the source vRoot (stored in proxyPosition)
-                return Instance.transform.position + ( proxyRotations[home] * Instance.transform.rotation ) * position + VirtualRoot.RelativePositionTo(Instance.transform.position);
+                // relatieve positie * rotatie van proxy + positie van remote pRoot, die door de vRoot laten doen
+                return VirtualRoot.TransformPosition(home, proxyRotations[home] * position + proxyPositions[home]);
+
+            // position the object in the same relative position as the source vRoot (stored in proxyPosition)
+            //return Instance.transform.position + Quaternion.Inverse(proxyRotations[home]) * Instance.transform.rotation * (position - proxyPositions[home]);
+            //return Instance.transform.position + ( Quaternion.Inverse(proxyRotations[home]) * Instance.transform.rotation ) * position + VirtualRoot.RelativePositionTo(Instance.transform.position);
         }
 
         public static Quaternion TransformRotation(Quaternion rotation, string home)
@@ -78,8 +82,10 @@ namespace UnityCEClient
             if (Instance == null)
                 return rotation;
             else
+                // rotatie van proxy * rotatie van ding, en dat weer voeren aan virtualRoot
+                return VirtualRoot.TransformRotation(home, proxyRotations[home] * rotation);
                 // rotate the object in the same relative orientation as the source vRoot (stored in proxyRotations)
-                return (proxyRotations[home] * Instance.transform.rotation) * rotation;
+                //return Instance.transform.rotation * Quaternion.Inverse(proxyRotations[home]) * rotation;
         }
 
         private void CheckPrimary(string externalID)
@@ -125,7 +131,7 @@ namespace UnityCEClient
                 // Position ourselves relative to the primary pRoot, in relation to its own position relative to its vRoot
                 transform.position = VirtualRoot.TransformPosition(primaryID, proxyPositions[primaryID]);
                 transform.rotation = VirtualRoot.TransformRotation(primaryID, proxyRotations[primaryID]);
-            }                
+            }
         }
     }
 }
