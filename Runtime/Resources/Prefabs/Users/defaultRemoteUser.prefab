@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5718745412410885972}
   m_Layer: 0
-  m_Name: head
+  m_Name: Head
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -324,7 +324,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6736437514481585198}
   m_Layer: 0
-  m_Name: handL
+  m_Name: LHand
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -584,7 +584,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6377962068762112793}
   m_Layer: 0
-  m_Name: handR
+  m_Name: RHand
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
