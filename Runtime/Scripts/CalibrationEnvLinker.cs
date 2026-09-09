@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace UnityCEClient
 {
@@ -29,6 +30,14 @@ namespace UnityCEClient
         [SerializeField] private RemotePrefabMap userMap;
         [Space]
         [SerializeField] private bool showDebugs = false;
+        [Space]
+        [Tooltip("Enter the expected IDs of remote objects here, to auto-link them to scene objects. Make sure they match the data profile!")]
+        [SerializeField] private SerializableDictionary<string, GameObject> preSpawnedObjects = new();
+
+        [Header("Hacks")]
+        public SerializableDictionary<string, Vector3> userPositionOffset = new SerializableDictionary<string, Vector3>();
+        public SerializableDictionary<string, Vector3> userRotationOffset = new SerializableDictionary<string, Vector3>();
+        public static bool disableHacks = true;
 
         private static CalibrationEnvLinker _instance;
 
@@ -56,7 +65,43 @@ namespace UnityCEClient
             }
         }
 
-		private void Awake()
+        public static Vector3 GetUserPositionOffset(string fullName)
+        {
+            if (_instance == null) return Vector3.zero;
+            else return _instance.UserPositionOffsetFor(fullName);
+        }
+
+        public Vector3 UserPositionOffsetFor(string fullName)
+        {
+            foreach (KeyValuePair<string, Vector3> pair in userPositionOffset)
+            {
+                if (fullName.Contains(pair.Key) )
+                {
+                    return pair.Value;
+                }
+            }
+            return Vector3.zero;
+        }
+
+        public static Vector3 GetUserRotationOffset(string fullName)
+        {
+            if (_instance == null) return Vector3.zero;
+            else return _instance.UserRotationOffsetFor(fullName);
+        }
+
+        public Vector3 UserRotationOffsetFor(string fullName)
+        {
+            foreach (KeyValuePair<string, Vector3> pair in userRotationOffset)
+            {
+                if (fullName.Contains(pair.Key))
+                {
+                    return pair.Value;
+                }
+            }
+            return Vector3.zero;
+        }
+
+        private void Awake()
 		{
 			_instance = this;
 		}
@@ -263,6 +308,7 @@ namespace UnityCEClient
             }
 
             syncCtx.Post(_ => user.ApplyTransforms(parsedBoneNames.ToArray(), parsedBoneTransforms.ToArray()), null);
+            syncCtx.Post(_ => user.HandleVariables(userJson["data"]), null);
         }
 
         private void ParseObject(JToken objectJson, SynchronizationContext syncCtx, Transform parent = null)
@@ -333,12 +379,19 @@ namespace UnityCEClient
 
             // setup or reuse GO based on id
             GameObject obj;
+            // Check if the object is pre-spawn-configured
+            if (preSpawnedObjects.ContainsKey(id) && preSpawnedObjects[id] != null)
+            {
+                syncCtx.Send(_ => LinkPrespawnedObject(objectMap.map[tagValue], id, nameToken != null ? nameToken.Value<string>() : "no_name", tagValue, homeToken), null);
+                obj = preSpawnedObjects[id];
+            }
+            else
             if (!spawnedObjects.TryGetValue(id, out obj))
             {
                 // All tag values should be in map
                 if (objectMap.map.Contains(tagValue))
                 {
-                    syncCtx.Send(_ => CreateObject(objectMap.map[tagValue], id, nameToken != null ? nameToken.Value<string>() : "no_name", tagValue), null);
+                    syncCtx.Send(_ => CreateObject(objectMap.map[tagValue], id, nameToken != null ? nameToken.Value<string>() : "no_name", tagValue, homeToken), null);
                     obj = spawnedObjects[id];
                 }
                 else
@@ -350,7 +403,7 @@ namespace UnityCEClient
             }
 
             // update parent and transform
-            RemoteObject baseTemplate = spawnedObjectTemplateScripts[id];           
+            RemoteObject baseTemplate = spawnedObjectTemplateScripts[id];         
             if (baseTemplate == null || baseTemplate.IsLive())
             {
                 syncCtx.Post(_ => TransformObject(obj, VirtualRoot.TransformPosition(homeToken, position), VirtualRoot.TransformRotation(homeToken, rotation), scale), null);
@@ -377,11 +430,33 @@ namespace UnityCEClient
             remoteUsers[id] = user;
         }
 
-        private void CreateObject(GameObject prefab, string id, string name, string tag)
+        private void CreateObject(GameObject prefab, string id, string name, string tag, string home)
         {
             GameObject obj = Instantiate(prefab);
             obj.name = name;
             obj.tag = tag;
+            
+            RemoteObject remObj = obj.GetComponent<RemoteObject>();
+            if (remObj != null)
+            {
+                remObj.id = id;
+                remObj.home = home;
+            }
+            spawnedObjects.Add(id, obj);
+            spawnedObjectTemplateScripts.Add(id, obj.GetComponent<RemoteObject>());
+        }
+
+        private void LinkPrespawnedObject(GameObject obj, string id, string name, string tag, string home)
+        {
+            obj.name = name;
+            obj.tag = tag;
+
+            RemoteObject remObj = obj.GetComponent<RemoteObject>();
+            if (remObj != null)
+            {
+                remObj.id = id;
+                remObj.home = home;
+            }
             spawnedObjects.Add(id, obj);
             spawnedObjectTemplateScripts.Add(id, obj.GetComponent<RemoteObject>());
         }
