@@ -17,6 +17,11 @@
       "displayName": "Optitrack",
       "description": "Sample containing scripts & integrations for use with Optitrack Motion Capture",
       "path": "Samples~/Optitrack"
+    },
+    {
+      "displayName": "FemtoBolt",
+      "description": "Sample containing scripts & integrations for use with Femto Bolt & associated external example Package",
+      "path": "Samples~/FemtoBolt"
     }
   ]
 }
