@@ -10,6 +10,11 @@ public class RemoteFemtoStream : RemoteObject
     {
         base.Awake();
         valueFunctions.Add("url", HandleURL);
+
+#if FEMTO_SAMPLE_IMPORTED
+            // TODO: implement            
+            FemtoUtilities.InitializeStream();
+#endif
     }
 
     private void HandleURL(JToken variableMember)
@@ -19,6 +24,10 @@ public class RemoteFemtoStream : RemoteObject
         {
             url = newUrl;
             Debug.Log("TODO: INITIALIZE FEMTO STREAM");
+#if FEMTO_SAMPLE_IMPORTED
+            // TODO: implement
+            FemtoUtilities.InitializeStream();
+#endif
         }
     }
 }

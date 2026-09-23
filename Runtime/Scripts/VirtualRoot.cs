@@ -45,8 +45,14 @@ namespace UnityCEClient
             if (Instance == null || !proxyRotations.ContainsKey(fromHome) || string.IsNullOrEmpty(fromHome))
                 return rotation;
             else
-                // rotate the object in the same relative orientation as the source vRoot (stored in proxyEuler)
+                // rotate the object in the same relative orientation as the source vRoot (stored in proxyRotations)
                 return Instance.transform.rotation * Quaternion.Inverse(proxyRotations[fromHome]) * rotation;
+        }
+
+        public static Vector3 RelativePositionTo(Vector3 position)
+        {
+            if (Instance == null) return Vector3.zero;
+            else return Instance.transform.position - position;
         }
     }
 }
