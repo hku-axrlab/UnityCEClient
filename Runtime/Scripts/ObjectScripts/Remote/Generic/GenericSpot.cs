@@ -39,7 +39,7 @@ namespace UnityCEClient
 		private void HandleIntensity(JToken variableMember)
 		{
 			float intensity = variableMember.Value<float>();
-			light.intensity = intensity;
+			light.intensity = intensity * 5;
 		}
 
 		private void HandleRadius(JToken variableMember)
