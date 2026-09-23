@@ -50,6 +50,8 @@ namespace UnityCEClient
         private Dictionary<string, LocalObject> localObjects = new Dictionary<string, LocalObject>();
         private Dictionary<string, RemoteUser> remoteUsers = new Dictionary<string, RemoteUser>();
 
+        [SerializeField] private HashSet<string> missingTags = new HashSet<string>();
+
         [Serializable]
         struct ConnectMsg
         {
@@ -104,7 +106,8 @@ namespace UnityCEClient
         private void Awake()
 		{
 			_instance = this;
-		}
+            missingTags = new HashSet<string>();
+        }
 
         private void OnDestroy()
         {
@@ -398,6 +401,8 @@ namespace UnityCEClient
                 {
                     // ignore or debug log missing tag
                     // Debug.LogWarning($"Tag missing from prefabMap: {tagValue}");
+                    // TODO: Push this to some debug list?
+                    missingTags.Add(tagValue);
                     return;
                 }
             }
@@ -433,30 +438,34 @@ namespace UnityCEClient
         private void CreateObject(GameObject prefab, string id, string name, string tag, string home)
         {
             GameObject obj = Instantiate(prefab);
-            obj.name = name;
+            obj.name = tag + "_" + id;
             obj.tag = tag;
             
             RemoteObject remObj = obj.GetComponent<RemoteObject>();
-            if (remObj != null)
-            {
+            if (remObj == null) remObj = obj.AddComponent<RemoteObject>();
+            // Always want this to exist, even if it just to handle basic live / visible values
+            //if (remObj != null)
+            //{
                 remObj.id = id;
                 remObj.home = home;
-            }
+            //}
             spawnedObjects.Add(id, obj);
             spawnedObjectTemplateScripts.Add(id, obj.GetComponent<RemoteObject>());
         }
 
         private void LinkPrespawnedObject(GameObject obj, string id, string name, string tag, string home)
         {
-            obj.name = name;
+            obj.name = tag+"_"+id;
             obj.tag = tag;
 
             RemoteObject remObj = obj.GetComponent<RemoteObject>();
-            if (remObj != null)
-            {
+            if (remObj == null) remObj = obj.AddComponent<RemoteObject>();
+            // Always want this to exist, even if it just to handle basic live / visible values
+            //if (remObj != null)
+            //{
                 remObj.id = id;
                 remObj.home = home;
-            }
+            //}
             spawnedObjects.Add(id, obj);
             spawnedObjectTemplateScripts.Add(id, obj.GetComponent<RemoteObject>());
         }
