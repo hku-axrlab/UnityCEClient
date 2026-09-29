@@ -427,6 +427,7 @@ namespace UnityCEClient
         private void CreateUser(GameObject prefab, string id, string name, string home)
         {
             GameObject userObj = Instantiate(prefab);
+            DontDestroyOnLoad(userObj);
             userObj.name = name;
             RemoteUser user = userObj.GetComponent<RemoteUser>();
             user.name = name;
@@ -438,6 +439,7 @@ namespace UnityCEClient
         private void CreateObject(GameObject prefab, string id, string name, string tag, string home)
         {
             GameObject obj = Instantiate(prefab);
+            DontDestroyOnLoad(obj);
             obj.name = tag + "_" + id;
             obj.tag = tag;
             
