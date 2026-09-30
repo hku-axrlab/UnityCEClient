@@ -273,8 +273,8 @@ namespace UnityCEClient
             RemoteUser user;
             // Find or create a RemoteUser for this user
             if (!remoteUsers.ContainsKey(id)){
-                if (userMap.map.ContainsKey(name))
-                    syncCtx.Send(_ => CreateUser(userMap.map[name], id, name, home), null);
+                if (userMap.map.ContainsKey(id))
+                    syncCtx.Send(_ => CreateUser(userMap.map[id], id, name, home), null);
                 else
                     syncCtx.Send(_ => CreateUser((GameObject)Resources.Load("Prefabs/Users/defaultRemoteUser"), id, name, home), null);
             }
