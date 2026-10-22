@@ -388,7 +388,7 @@ namespace UnityCEClient
                 // All tag values should be in map
                 if (preSpawnedObjects.ContainsKey(id) && preSpawnedObjects[id] != null)
                 {
-                    syncCtx.Send(_ => LinkPrespawnedObject(objectMap.map[tagValue], id, nameToken != null ? nameToken.Value<string>() : "no_name", tagValue, homeToken), null);
+                    syncCtx.Send(_ => LinkPrespawnedObject(preSpawnedObjects[id], id, nameToken != null ? nameToken.Value<string>() : "no_name", tagValue, homeToken), null);
                     obj = preSpawnedObjects[id];
                 }
                 else
