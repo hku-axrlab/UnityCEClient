@@ -383,15 +383,15 @@ namespace UnityCEClient
             // setup or reuse GO based on id
             GameObject obj;
             // Check if the object is pre-spawn-configured
-            if (preSpawnedObjects.ContainsKey(id) && preSpawnedObjects[id] != null)
-            {
-                syncCtx.Send(_ => LinkPrespawnedObject(objectMap.map[tagValue], id, nameToken != null ? nameToken.Value<string>() : "no_name", tagValue, homeToken), null);
-                obj = preSpawnedObjects[id];
-            }
-            else
             if (!spawnedObjects.TryGetValue(id, out obj))
             {
                 // All tag values should be in map
+                if (preSpawnedObjects.ContainsKey(id) && preSpawnedObjects[id] != null)
+                {
+                    syncCtx.Send(_ => LinkPrespawnedObject(objectMap.map[tagValue], id, nameToken != null ? nameToken.Value<string>() : "no_name", tagValue, homeToken), null);
+                    obj = preSpawnedObjects[id];
+                }
+                else
                 if (objectMap.map.Contains(tagValue))
                 {
                     syncCtx.Send(_ => CreateObject(objectMap.map[tagValue], id, nameToken != null ? nameToken.Value<string>() : "no_name", tagValue, homeToken), null);
