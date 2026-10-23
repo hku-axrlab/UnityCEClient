@@ -13,6 +13,9 @@ namespace UnityCEClient
 	/// </summary>
 	public class RemoteObject : MonoBehaviour
 	{
+		public string id = "";
+		public string home = "";
+
 		protected bool isActive = true;
 		protected bool isLive = true;
 
@@ -57,5 +60,5 @@ namespace UnityCEClient
 			if (isActive && !gameObject.activeInHierarchy)
 				gameObject.SetActive(true);
 		}
-	}
+    }
 }

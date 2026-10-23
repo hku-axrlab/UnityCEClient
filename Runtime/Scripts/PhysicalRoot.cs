@@ -16,6 +16,9 @@ namespace UnityCEClient
         public static Dictionary<string, Vector3> proxyPositions = new Dictionary<string, Vector3>();
         public static Dictionary<string, Quaternion> proxyRotations = new Dictionary<string, Quaternion>();
 
+        public static object proxyPositionsLock = new();
+        public static object proxyRotationsLock = new();
+
         [Tooltip("Should this client treat itself as the \"Colocation Host\"? If yes, it will ignore all co-location updates from other clients (such as the Playspace in Resonite)")]
         public bool isPrimary = false;
         private string primaryID = string.Empty;
@@ -25,24 +28,64 @@ namespace UnityCEClient
             Instance = this;
         }
 
+        public static Vector3 GetPosition()
+        {
+            return Instance.transform.position;
+        }
+
+        public static Quaternion GetRotation()
+        {
+            return Instance.transform.rotation;
+        }
+
         public static void SetProxyPosition(string home, Vector3 position)
         {
-            if (proxyPositions.ContainsKey(home))
-                proxyPositions[home] = position;
-            else
-                proxyPositions.Add(home, position);
+            lock (proxyPositionsLock)
+            {
+                if (proxyPositions.ContainsKey(home))
+                    proxyPositions[home] = position;
+                else
+                    proxyPositions.Add(home, position);
+            }
 
             Instance?.CheckPrimary(home);
         }
 
         public static void SetProxyRotation(string home, Quaternion rotation)
         {
-            if (proxyRotations.ContainsKey(home))
-                proxyRotations[home] = rotation;
-            else
-                proxyRotations.Add(home, rotation);
+            lock (proxyRotationsLock)
+            {
+                if (proxyRotations.ContainsKey(home))
+                    proxyRotations[home] = rotation;
+                else
+                    proxyRotations.Add(home, rotation);
+            }
 
             Instance?.CheckPrimary(home);
+        }
+
+        public static Vector3 TransformPosition(Vector3 position, string home)
+        {
+            if (Instance == null)
+                return position;
+            else
+                // relatieve positie * rotatie van proxy + positie van remote pRoot, die door de vRoot laten doen
+                return VirtualRoot.TransformPosition(home, proxyRotations[home] * position + proxyPositions[home]);
+
+            // position the object in the same relative position as the source vRoot (stored in proxyPosition)
+            //return Instance.transform.position + Quaternion.Inverse(proxyRotations[home]) * Instance.transform.rotation * (position - proxyPositions[home]);
+            //return Instance.transform.position + ( Quaternion.Inverse(proxyRotations[home]) * Instance.transform.rotation ) * position + VirtualRoot.RelativePositionTo(Instance.transform.position);
+        }
+
+        public static Quaternion TransformRotation(Quaternion rotation, string home)
+        {
+            if (Instance == null)
+                return rotation;
+            else
+                // rotatie van proxy * rotatie van ding, en dat weer voeren aan virtualRoot
+                return VirtualRoot.TransformRotation(home, proxyRotations[home] * rotation);
+                // rotate the object in the same relative orientation as the source vRoot (stored in proxyRotations)
+                //return Instance.transform.rotation * Quaternion.Inverse(proxyRotations[home]) * rotation;
         }
 
         private void CheckPrimary(string externalID)
@@ -57,9 +100,38 @@ namespace UnityCEClient
             // Follow the master pRoot (if there is one)
             if (isPrimary || string.IsNullOrEmpty(primaryID)) return;
 
-            // Position ourselves relative to the primary pRoot, in relation to its own position relative to its vRoot
-            transform.position = VirtualRoot.TransformPosition(primaryID, proxyPositions[primaryID]);
-            transform.rotation = VirtualRoot.TransformRotation(primaryID, proxyRotations[primaryID]);
+            if ( !proxyPositions.ContainsKey(primaryID) )
+            {
+                // FIXME: There appears to a be a bug where some keys are present, but not found by ContainsKey
+
+                lock (proxyPositionsLock)
+                {
+                    foreach (KeyValuePair<string, Vector3> pair in proxyPositions)
+                    {
+                        if (pair.Key == primaryID)
+                        {
+                            transform.position = VirtualRoot.TransformPosition(primaryID, pair.Value);// proxyPositions[primaryID]);
+                        }
+                    }
+                }
+
+                lock (proxyRotationsLock)
+                {
+                    foreach (KeyValuePair<string, Quaternion> pair in proxyRotations)
+                    {
+                        if (pair.Key == primaryID)
+                        {
+                            transform.rotation = VirtualRoot.TransformRotation(primaryID, pair.Value); //proxyRotations[primaryID]);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                // Position ourselves relative to the primary pRoot, in relation to its own position relative to its vRoot
+                transform.position = VirtualRoot.TransformPosition(primaryID, proxyPositions[primaryID]);
+                transform.rotation = VirtualRoot.TransformRotation(primaryID, proxyRotations[primaryID]);
+            }
         }
     }
 }

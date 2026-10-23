@@ -11,6 +11,7 @@ namespace UnityCEClient
         public string name;
         public List<string> boneNames;
         public List<TransformData> boneTransforms;
+        public ObjectVariable[] variables;
     }
 
     [Serializable]
@@ -106,7 +107,6 @@ namespace UnityCEClient
             position = new Vector3Data();
             rotation = new QuaternionData();
             scale = new Vector3Data();
-
         }
 
         public static TransformData From(Transform t)
@@ -161,13 +161,16 @@ namespace UnityCEClient
     {
         public const int USER_SEND_DELAY = 33;
 
-        public string userName = "UnityUser";
+        internal string userType = "Default";
+        public string avatarType = "UnityUser";
         public string id = "";
 
         public List<Transform> bones = new List<Transform>();
 
         [Tooltip("Set this to make rotations relative to this object, for instance the initial-hips positions of a character")]
         public Transform relativeToRotation = null;
+
+        protected Dictionary<string, ValueFunction> userCustomData = new Dictionary<string, ValueFunction>();
 
         private UserData data = new UserData();
         public UserData GetUserData()
@@ -186,7 +189,7 @@ namespace UnityCEClient
                 id += "-" + Utils.GenerateId();
 
             data.id = id;
-            data.name = userName;
+            data.name = avatarType;
 
             if (relativeToRotation != null)
             {
@@ -198,8 +201,15 @@ namespace UnityCEClient
                 relativeToRotation = g.transform;
             }
 
+            userCustomData.Add("userType", GetUserType);
+
             // Force a specific tag for now
             CalibrationEnvLinker.RegisterUser(this);
+        }
+
+        public (System.Type, object) GetUserType()
+        {
+            return (typeof(string), userType);
         }
 
         protected virtual void LateUpdate()
@@ -207,9 +217,27 @@ namespace UnityCEClient
             UpdateData();
         }
 
+        public ObjectVariable[] GetVariables()
+        {
+            List<ObjectVariable> vars = new List<ObjectVariable>(userCustomData.Keys.Count);
+
+            foreach (var pair in userCustomData)
+            {
+                ObjectVariable objVar = new ObjectVariable();
+                objVar.name = pair.Key;
+                var (type, value) = pair.Value.Invoke();
+                // TODO: standardize these to specific types?
+                objVar.type = type.ToString();
+                objVar.value = value;
+                vars.Add(objVar);
+            }
+
+            return vars.ToArray();
+        }
+        
         private void UpdateData()
         {
-            if (data.boneNames == null || data.boneTransforms == null)
+            if (data.boneNames == null || data.boneNames.Count != bones.Count)
             {
                 data.boneNames = new List<string>(bones.Count);
                 data.boneTransforms = new List<TransformData>(bones.Count);
@@ -231,6 +259,7 @@ namespace UnityCEClient
                         data.boneTransforms[i].rotation *= Quaternion.Inverse(relativeToRotation.rotation * Quaternion.Inverse(transform.rotation));
                     }
                 }
+                data.variables = GetVariables();
             }
         }
     }

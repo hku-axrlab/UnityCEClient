@@ -21,6 +21,10 @@ namespace UnityCEClient
 		[Tooltip("This will be overridden by boneCollection, unless set to Manual")]
 		public List<HumanBodyBones> selectedBones = new();
 
+        public string mocapClientType = "optitrack";
+        public string url = "localhost";
+        public string avatarName = "Default";
+
 		private Animator animator;
 
 		private void Awake()
@@ -38,9 +42,30 @@ namespace UnityCEClient
 			base.Start();
 			if (animator != null)
 				SetupBoneTransforms();
-		}
 
-		private void SetupBoneTransforms()
+            userType = "Mocap";
+
+            userCustomData.Add("MocapClientType", GetMocapClientType);
+            userCustomData.Add("URL", GetURL);
+            userCustomData.Add("AvatarName", GetAvatarName);
+        }
+
+        public (System.Type, object) GetMocapClientType()
+        {
+            return (typeof(string), mocapClientType);
+        }
+
+        public (System.Type, object) GetURL()
+        {
+            return (typeof(string), url);
+        }
+
+        public (System.Type, object) GetAvatarName()
+        {
+            return (typeof(string), avatarName);
+        }
+
+        private void SetupBoneTransforms()
 		{
 			switch (boneCollection)
 			{
